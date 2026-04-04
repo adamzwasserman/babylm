@@ -1,0 +1,19 @@
+[project]
+name = "babylm"
+version = "0.1.0"
+description = "Born Speaking French: BabyLM 2026 submission"
+requires-python = ">=3.13"
+dependencies = [
+    "datasets",
+    "huggingface_hub",
+    "transformers",
+    "torch",
+    "sentencepiece",
+    "spacy",
+    "pylangacq",
+    "requests",
+    "tqdm",
+    "numpy",
+    "pandas",
+    "pymysql>=1.1.2",
+]

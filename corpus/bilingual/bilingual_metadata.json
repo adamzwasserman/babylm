@@ -1,0 +1,12 @@
+{
+  "total_entries": 73,
+  "total_words": 2581,
+  "budget_pct": 0.0026,
+  "categories": {
+    "Verbs": 30,
+    "Nouns": 18,
+    "Function words": 10,
+    "Adjectives": 15
+  },
+  "purpose": "Harness C: vocabulary bridge for English eval of French-trained model"
+}

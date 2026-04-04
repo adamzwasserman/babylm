@@ -1,0 +1,11 @@
+datasets
+huggingface_hub
+transformers
+torch
+sentencepiece
+spacy
+pylangacq
+requests
+tqdm
+numpy
+pandas

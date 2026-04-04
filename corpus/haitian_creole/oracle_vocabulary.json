@@ -1,0 +1,1502 @@
+[
+  {
+    "hc_lemma": ".",
+    "french_equivalent": ".",
+    "frequency": 3029
+  },
+  {
+    "hc_lemma": "nou",
+    "french_equivalent": "nous/on/notre/nos",
+    "frequency": 2807
+  },
+  {
+    "hc_lemma": ",",
+    "french_equivalent": ",",
+    "frequency": 2739
+  },
+  {
+    "hc_lemma": "li",
+    "french_equivalent": "il/elle/son/sa/ses",
+    "frequency": 2721
+  },
+  {
+    "hc_lemma": "yo",
+    "french_equivalent": "ils/elles/leur/leurs",
+    "frequency": 2698
+  },
+  {
+    "hc_lemma": "la",
+    "french_equivalent": "là/le/la",
+    "frequency": 2605
+  },
+  {
+    "hc_lemma": "te",
+    "french_equivalent": "être/était/été",
+    "frequency": 2212
+  },
+  {
+    "hc_lemma": "ki",
+    "french_equivalent": "qui/que",
+    "frequency": 2131
+  },
+  {
+    "hc_lemma": "pou",
+    "french_equivalent": "pour",
+    "frequency": 2012
+  },
+  {
+    "hc_lemma": "nan",
+    "french_equivalent": "dans/en/au",
+    "frequency": 1588
+  },
+  {
+    "hc_lemma": "sa",
+    "french_equivalent": "ça/cela/ce/cette/ces",
+    "frequency": 1533
+  },
+  {
+    "hc_lemma": "yon",
+    "french_equivalent": "yon",
+    "frequency": 1267
+  },
+  {
+    "hc_lemma": "ap",
+    "french_equivalent": "être/en",
+    "frequency": 1237
+  },
+  {
+    "hc_lemma": "ak",
+    "french_equivalent": "avec/et",
+    "frequency": 1199
+  },
+  {
+    "hc_lemma": "fè",
+    "french_equivalent": "fè",
+    "frequency": 1150
+  },
+  {
+    "hc_lemma": "gen",
+    "french_equivalent": "avoir",
+    "frequency": 1109
+  },
+  {
+    "hc_lemma": "pa",
+    "french_equivalent": "pas/ne",
+    "frequency": 1020
+  },
+  {
+    "hc_lemma": "moun",
+    "french_equivalent": "personne/gens",
+    "frequency": 1000
+  },
+  {
+    "hc_lemma": "ou",
+    "french_equivalent": "tu/vous/ton/ta/tes",
+    "frequency": 933
+  },
+  {
+    "hc_lemma": "se",
+    "french_equivalent": "est/être",
+    "frequency": 749
+  },
+  {
+    "hc_lemma": "jewova",
+    "french_equivalent": "jewova",
+    "frequency": 739
+  },
+  {
+    "hc_lemma": "'",
+    "french_equivalent": "'",
+    "frequency": 644
+  },
+  {
+    "hc_lemma": "bondye",
+    "french_equivalent": "bondye",
+    "frequency": 568
+  },
+  {
+    "hc_lemma": "ka",
+    "french_equivalent": "ka",
+    "frequency": 558
+  },
+  {
+    "hc_lemma": "e",
+    "french_equivalent": "e",
+    "frequency": 552
+  },
+  {
+    "hc_lemma": "lè",
+    "french_equivalent": "lè",
+    "frequency": 505
+  },
+  {
+    "hc_lemma": "sou",
+    "french_equivalent": "sur",
+    "frequency": 476
+  },
+  {
+    "hc_lemma": "mwen",
+    "french_equivalent": "je/moi/mon/ma/mes",
+    "frequency": 387
+  },
+  {
+    "hc_lemma": "tout",
+    "french_equivalent": "tout",
+    "frequency": 364
+  },
+  {
+    "hc_lemma": "menm",
+    "french_equivalent": "même",
+    "frequency": 359
+  },
+  {
+    "hc_lemma": "bay",
+    "french_equivalent": "donner",
+    "frequency": 345
+  },
+  {
+    "hc_lemma": "vini",
+    "french_equivalent": "venir",
+    "frequency": 301
+  },
+  {
+    "hc_lemma": "di",
+    "french_equivalent": "dire",
+    "frequency": 300
+  },
+  {
+    "hc_lemma": "jezi",
+    "french_equivalent": "jezi",
+    "frequency": 295
+  },
+  {
+    "hc_lemma": "lòt",
+    "french_equivalent": "autre",
+    "frequency": 292
+  },
+  {
+    "hc_lemma": "?",
+    "french_equivalent": "?",
+    "frequency": 289
+  },
+  {
+    "hc_lemma": "epi",
+    "french_equivalent": "epi",
+    "frequency": 284
+  },
+  {
+    "hc_lemma": "men",
+    "french_equivalent": "mais",
+    "frequency": 270
+  },
+  {
+    "hc_lemma": "montre",
+    "french_equivalent": "montre",
+    "frequency": 255
+  },
+  {
+    "hc_lemma": "jan",
+    "french_equivalent": "jan",
+    "frequency": 239
+  },
+  {
+    "hc_lemma": "pi",
+    "french_equivalent": "pi",
+    "frequency": 239
+  },
+  {
+    "hc_lemma": "fason",
+    "french_equivalent": "fason",
+    "frequency": 239
+  },
+  {
+    "hc_lemma": "bagay",
+    "french_equivalent": "chose",
+    "frequency": 234
+  },
+  {
+    "hc_lemma": "konnen",
+    "french_equivalent": "connaître/savoir",
+    "frequency": 221
+  },
+  {
+    "hc_lemma": "anpil",
+    "french_equivalent": "beaucoup",
+    "frequency": 220
+  },
+  {
+    "hc_lemma": "bon",
+    "french_equivalent": "bon/bien",
+    "frequency": 213
+  },
+  {
+    "hc_lemma": "si",
+    "french_equivalent": "si",
+    "frequency": 210
+  },
+  {
+    "hc_lemma": "genyen",
+    "french_equivalent": "genyen",
+    "frequency": 206
+  },
+  {
+    "hc_lemma": "dwe",
+    "french_equivalent": "devoir",
+    "frequency": 204
+  },
+  {
+    "hc_lemma": "ede",
+    "french_equivalent": "ede",
+    "frequency": 197
+  },
+  {
+    "hc_lemma": "pral",
+    "french_equivalent": "aller",
+    "frequency": 187
+  },
+  {
+    "hc_lemma": "pran",
+    "french_equivalent": "prendre",
+    "frequency": 185
+  },
+  {
+    "hc_lemma": "wè",
+    "french_equivalent": "voir",
+    "frequency": 182
+  },
+  {
+    "hc_lemma": "vle",
+    "french_equivalent": "vouloir",
+    "frequency": 181
+  },
+  {
+    "hc_lemma": "jwenn",
+    "french_equivalent": "jwenn",
+    "frequency": 177
+  },
+  {
+    "hc_lemma": "byen",
+    "french_equivalent": "bien",
+    "frequency": 175
+  },
+  {
+    "hc_lemma": "lanmou",
+    "french_equivalent": "lanmou",
+    "frequency": 174
+  },
+  {
+    "hc_lemma": "oswa",
+    "french_equivalent": "oswa",
+    "frequency": 172
+  },
+  {
+    "hc_lemma": "bezwen",
+    "french_equivalent": "bezwen",
+    "frequency": 169
+  },
+  {
+    "hc_lemma": "renmen",
+    "french_equivalent": "renmen",
+    "frequency": 168
+  },
+  {
+    "hc_lemma": "konn",
+    "french_equivalent": "konn",
+    "frequency": 164
+  },
+  {
+    "hc_lemma": "tou",
+    "french_equivalent": "aussi",
+    "frequency": 162
+  },
+  {
+    "hc_lemma": "de",
+    "french_equivalent": "deux",
+    "frequency": 159
+  },
+  {
+    "hc_lemma": "travay",
+    "french_equivalent": "travail",
+    "frequency": 159
+  },
+  {
+    "hc_lemma": "sèvi",
+    "french_equivalent": "sèvi",
+    "frequency": 158
+  },
+  {
+    "hc_lemma": "plis",
+    "french_equivalent": "plus",
+    "frequency": 157
+  },
+  {
+    "hc_lemma": "kèk",
+    "french_equivalent": "kèk",
+    "frequency": 156
+  },
+  {
+    "hc_lemma": "vin",
+    "french_equivalent": "vin",
+    "frequency": 153
+  },
+  {
+    "hc_lemma": "viv",
+    "french_equivalent": "viv",
+    "frequency": 153
+  },
+  {
+    "hc_lemma": "èske",
+    "french_equivalent": "èske",
+    "frequency": 149
+  },
+  {
+    "hc_lemma": "pale",
+    "french_equivalent": "pale",
+    "frequency": 142
+  },
+  {
+    "hc_lemma": "kote",
+    "french_equivalent": "endroit/où",
+    "frequency": 142
+  },
+  {
+    "hc_lemma": "lavi",
+    "french_equivalent": "lavi",
+    "frequency": 140
+  },
+  {
+    "hc_lemma": "lafwa",
+    "french_equivalent": "lafwa",
+    "frequency": 131
+  },
+  {
+    "hc_lemma": "gwo",
+    "french_equivalent": "grand/gros",
+    "frequency": 130
+  },
+  {
+    "hc_lemma": "tan",
+    "french_equivalent": "temps",
+    "frequency": 129
+  },
+  {
+    "hc_lemma": "!",
+    "french_equivalent": "!",
+    "frequency": 128
+  },
+  {
+    "hc_lemma": "an",
+    "french_equivalent": "en/dans/un/une",
+    "frequency": 127
+  },
+  {
+    "hc_lemma": "bib",
+    "french_equivalent": "bib",
+    "frequency": 126
+  },
+  {
+    "hc_lemma": "rive",
+    "french_equivalent": "rive",
+    "frequency": 124
+  },
+  {
+    "hc_lemma": "pawòl",
+    "french_equivalent": "pawòl",
+    "frequency": 124
+  },
+  {
+    "hc_lemma": "paske",
+    "french_equivalent": "paske",
+    "frequency": 122
+  },
+  {
+    "hc_lemma": "pase",
+    "french_equivalent": "pase",
+    "frequency": 122
+  },
+  {
+    "hc_lemma": "pitit",
+    "french_equivalent": "pitit",
+    "frequency": 120
+  },
+  {
+    "hc_lemma": "tè",
+    "french_equivalent": "terre",
+    "frequency": 119
+  },
+  {
+    "hc_lemma": "ta",
+    "french_equivalent": "ta",
+    "frequency": 118
+  },
+  {
+    "hc_lemma": "kretyen",
+    "french_equivalent": "kretyen",
+    "frequency": 115
+  },
+  {
+    "hc_lemma": "konsa",
+    "french_equivalent": "konsa",
+    "frequency": 110
+  },
+  {
+    "hc_lemma": "kontinye",
+    "french_equivalent": "kontinye",
+    "frequency": 109
+  },
+  {
+    "hc_lemma": "satan",
+    "french_equivalent": "satan",
+    "frequency": 107
+  },
+  {
+    "hc_lemma": "kapab",
+    "french_equivalent": "pouvoir/capable",
+    "frequency": 106
+  },
+  {
+    "hc_lemma": "ti",
+    "french_equivalent": "ti",
+    "frequency": 105
+  },
+  {
+    "hc_lemma": "kè",
+    "french_equivalent": "que/quoi",
+    "frequency": 105
+  },
+  {
+    "hc_lemma": "monn",
+    "french_equivalent": "monn",
+    "frequency": 104
+  },
+  {
+    "hc_lemma": "frè",
+    "french_equivalent": "frè",
+    "frequency": 103
+  },
+  {
+    "hc_lemma": "ansanm",
+    "french_equivalent": "ansanm",
+    "frequency": 103
+  },
+  {
+    "hc_lemma": "tèt",
+    "french_equivalent": "tèt",
+    "frequency": 102
+  },
+  {
+    "hc_lemma": "espirityèl",
+    "french_equivalent": "espirityèl",
+    "frequency": 101
+  },
+  {
+    "hc_lemma": "non",
+    "french_equivalent": "non",
+    "frequency": 100
+  },
+  {
+    "hc_lemma": "chwazi",
+    "french_equivalent": "chwazi",
+    "frequency": 100
+  },
+  {
+    "hc_lemma": "va",
+    "french_equivalent": "aller/va",
+    "frequency": 100
+  },
+  {
+    "hc_lemma": "isit",
+    "french_equivalent": "ici",
+    "frequency": 100
+  },
+  {
+    "hc_lemma": "panse",
+    "french_equivalent": "panse",
+    "frequency": 99
+  },
+  {
+    "hc_lemma": "mande",
+    "french_equivalent": "mande",
+    "frequency": 99
+  },
+  {
+    "hc_lemma": "toujou",
+    "french_equivalent": "toujours",
+    "frequency": 98
+  },
+  {
+    "hc_lemma": "san",
+    "french_equivalent": "san",
+    "frequency": 96
+  },
+  {
+    "hc_lemma": "kòm",
+    "french_equivalent": "kòm",
+    "frequency": 95
+  },
+  {
+    "hc_lemma": "enpòtan",
+    "french_equivalent": "enpòtan",
+    "frequency": 94
+  },
+  {
+    "hc_lemma": "egzanp",
+    "french_equivalent": "egzanp",
+    "frequency": 92
+  },
+  {
+    "hc_lemma": "pandan",
+    "french_equivalent": "pandan",
+    "frequency": 90
+  },
+  {
+    "hc_lemma": "kite",
+    "french_equivalent": "kite",
+    "frequency": 87
+  },
+  {
+    "hc_lemma": "chèche",
+    "french_equivalent": "chèche",
+    "frequency": 84
+  },
+  {
+    "hc_lemma": "lespri",
+    "french_equivalent": "lespri",
+    "frequency": 83
+  },
+  {
+    "hc_lemma": "bèl",
+    "french_equivalent": "bèl",
+    "frequency": 82
+  },
+  {
+    "hc_lemma": "syèl",
+    "french_equivalent": "syèl",
+    "frequency": 82
+  },
+  {
+    "hc_lemma": ":",
+    "french_equivalent": ":",
+    "frequency": 81
+  },
+  {
+    "hc_lemma": "youn",
+    "french_equivalent": "youn",
+    "frequency": 80
+  },
+  {
+    "hc_lemma": "apre",
+    "french_equivalent": "apre",
+    "frequency": 80
+  },
+  {
+    "hc_lemma": "depi",
+    "french_equivalent": "depi",
+    "frequency": 78
+  },
+  {
+    "hc_lemma": "konprann",
+    "french_equivalent": "konprann",
+    "frequency": 76
+  },
+  {
+    "hc_lemma": "aprann",
+    "french_equivalent": "aprann",
+    "frequency": 76
+  },
+  {
+    "hc_lemma": "janm",
+    "french_equivalent": "janm",
+    "frequency": 74
+  },
+  {
+    "hc_lemma": "avè",
+    "french_equivalent": "avè",
+    "frequency": 74
+  },
+  {
+    "hc_lemma": "kont",
+    "french_equivalent": "kont",
+    "frequency": 74
+  },
+  {
+    "hc_lemma": "kongregasyon",
+    "french_equivalent": "kongregasyon",
+    "frequency": 74
+  },
+  {
+    "hc_lemma": "santi",
+    "french_equivalent": "santi",
+    "frequency": 73
+  },
+  {
+    "hc_lemma": "moman",
+    "french_equivalent": "moman",
+    "frequency": 72
+  },
+  {
+    "hc_lemma": "wayòm",
+    "french_equivalent": "wayòm",
+    "frequency": 71
+  },
+  {
+    "hc_lemma": "gason",
+    "french_equivalent": "gason",
+    "frequency": 71
+  },
+  {
+    "hc_lemma": "fidèl",
+    "french_equivalent": "fidèl",
+    "frequency": 71
+  },
+  {
+    "hc_lemma": "zanmi",
+    "french_equivalent": "zanmi",
+    "frequency": 71
+  },
+  {
+    "hc_lemma": "fanmi",
+    "french_equivalent": "fanmi",
+    "frequency": 70
+  },
+  {
+    "hc_lemma": "avèk",
+    "french_equivalent": "avèk",
+    "frequency": 70
+  },
+  {
+    "hc_lemma": "ann",
+    "french_equivalent": "ann",
+    "frequency": 69
+  },
+  {
+    "hc_lemma": "anba",
+    "french_equivalent": "anba",
+    "frequency": 69
+  },
+  {
+    "hc_lemma": "lèzòm",
+    "french_equivalent": "lèzòm",
+    "frequency": 69
+  },
+  {
+    "hc_lemma": "ale",
+    "french_equivalent": "aller",
+    "frequency": 68
+  },
+  {
+    "hc_lemma": "plizyè",
+    "french_equivalent": "plizyè",
+    "frequency": 68
+  },
+  {
+    "hc_lemma": "kontan",
+    "french_equivalent": "kontan",
+    "frequency": 68
+  },
+  {
+    "hc_lemma": "david",
+    "french_equivalent": "david",
+    "frequency": 67
+  },
+  {
+    "hc_lemma": "premye",
+    "french_equivalent": "premye",
+    "frequency": 66
+  },
+  {
+    "hc_lemma": "kalite",
+    "french_equivalent": "kalite",
+    "frequency": 66
+  },
+  {
+    "hc_lemma": "pèp",
+    "french_equivalent": "pèp",
+    "frequency": 66
+  },
+  {
+    "hc_lemma": "chak",
+    "french_equivalent": "chak",
+    "frequency": 65
+  },
+  {
+    "hc_lemma": "demontre",
+    "french_equivalent": "demontre",
+    "frequency": 65
+  },
+  {
+    "hc_lemma": "pèmèt",
+    "french_equivalent": "pèmèt",
+    "frequency": 64
+  },
+  {
+    "hc_lemma": "fini",
+    "french_equivalent": "fini",
+    "frequency": 63
+  },
+  {
+    "hc_lemma": "kris",
+    "french_equivalent": "kris",
+    "frequency": 63
+  },
+  {
+    "hc_lemma": "jou",
+    "french_equivalent": "jour",
+    "frequency": 62
+  },
+  {
+    "hc_lemma": "peyi",
+    "french_equivalent": "pays",
+    "frequency": 62
+  },
+  {
+    "hc_lemma": "relasyon",
+    "french_equivalent": "relasyon",
+    "frequency": 61
+  },
+  {
+    "hc_lemma": "ansyen",
+    "french_equivalent": "ansyen",
+    "frequency": 61
+  },
+  {
+    "hc_lemma": "ane",
+    "french_equivalent": "ane",
+    "frequency": 60
+  },
+  {
+    "hc_lemma": "reflechi",
+    "french_equivalent": "reflechi",
+    "frequency": 60
+  },
+  {
+    "hc_lemma": "papa",
+    "french_equivalent": "papa",
+    "frequency": 59
+  },
+  {
+    "hc_lemma": "rezon",
+    "french_equivalent": "rezon",
+    "frequency": 59
+  },
+  {
+    "hc_lemma": "ba",
+    "french_equivalent": "ba",
+    "frequency": 59
+  },
+  {
+    "hc_lemma": "nouvo",
+    "french_equivalent": "nouvo",
+    "frequency": 58
+  },
+  {
+    "hc_lemma": "sependan",
+    "french_equivalent": "sependan",
+    "frequency": 58
+  },
+  {
+    "hc_lemma": "ret",
+    "french_equivalent": "ret",
+    "frequency": 57
+  },
+  {
+    "hc_lemma": "jis",
+    "french_equivalent": "jis",
+    "frequency": 57
+  },
+  {
+    "hc_lemma": "pwoblèm",
+    "french_equivalent": "pwoblèm",
+    "frequency": 56
+  },
+  {
+    "hc_lemma": "ke",
+    "french_equivalent": "ke",
+    "frequency": 55
+  },
+  {
+    "hc_lemma": "kòmanse",
+    "french_equivalent": "kòmanse",
+    "frequency": 54
+  },
+  {
+    "hc_lemma": "tann",
+    "french_equivalent": "tann",
+    "frequency": 53
+  },
+  {
+    "hc_lemma": "domèn",
+    "french_equivalent": "domèn",
+    "frequency": 53
+  },
+  {
+    "hc_lemma": "aji",
+    "french_equivalent": "aji",
+    "frequency": 53
+  },
+  {
+    "hc_lemma": "antanke",
+    "french_equivalent": "antanke",
+    "frequency": 53
+  },
+  {
+    "hc_lemma": "konfyans",
+    "french_equivalent": "konfyans",
+    "frequency": 53
+  },
+  {
+    "hc_lemma": "rete",
+    "french_equivalent": "rester",
+    "frequency": 52
+  },
+  {
+    "hc_lemma": "move",
+    "french_equivalent": "move",
+    "frequency": 52
+  },
+  {
+    "hc_lemma": "gendwa",
+    "french_equivalent": "gendwa",
+    "frequency": 52
+  },
+  {
+    "hc_lemma": "mal",
+    "french_equivalent": "mal",
+    "frequency": 52
+  },
+  {
+    "hc_lemma": "okenn",
+    "french_equivalent": "aucun",
+    "frequency": 51
+  },
+  {
+    "hc_lemma": "tankou",
+    "french_equivalent": "comme",
+    "frequency": 51
+  },
+  {
+    "hc_lemma": "lang",
+    "french_equivalent": "lang",
+    "frequency": 50
+  },
+  {
+    "hc_lemma": "wa",
+    "french_equivalent": "wa",
+    "frequency": 49
+  },
+  {
+    "hc_lemma": "klè",
+    "french_equivalent": "klè",
+    "frequency": 49
+  },
+  {
+    "hc_lemma": "kenbe",
+    "french_equivalent": "kenbe",
+    "frequency": 48
+  },
+  {
+    "hc_lemma": "objektif",
+    "french_equivalent": "objektif",
+    "frequency": 48
+  },
+  {
+    "hc_lemma": "predikasyon",
+    "french_equivalent": "predikasyon",
+    "frequency": 48
+  },
+  {
+    "hc_lemma": "petèt",
+    "french_equivalent": "petèt",
+    "frequency": 48
+  },
+  {
+    "hc_lemma": "ekri",
+    "french_equivalent": "ekri",
+    "frequency": 47
+  },
+  {
+    "hc_lemma": "disip",
+    "french_equivalent": "disip",
+    "frequency": 47
+  },
+  {
+    "hc_lemma": "sen",
+    "french_equivalent": "sen",
+    "frequency": 47
+  },
+  {
+    "hc_lemma": "abraram",
+    "french_equivalent": "abraram",
+    "frequency": 47
+  },
+  {
+    "hc_lemma": "fèt",
+    "french_equivalent": "fèt",
+    "frequency": 46
+  },
+  {
+    "hc_lemma": "ni",
+    "french_equivalent": "ni",
+    "frequency": 46
+  },
+  {
+    "hc_lemma": "manje",
+    "french_equivalent": "nourriture/manger",
+    "frequency": 46
+  },
+  {
+    "hc_lemma": "fòmasyon",
+    "french_equivalent": "fòmasyon",
+    "frequency": 46
+  },
+  {
+    "hc_lemma": "konsènan",
+    "french_equivalent": "konsènan",
+    "frequency": 46
+  },
+  {
+    "hc_lemma": "toutpandan",
+    "french_equivalent": "toutpandan",
+    "frequency": 46
+  },
+  {
+    "hc_lemma": "sèvitè",
+    "french_equivalent": "sèvitè",
+    "frequency": 46
+  },
+  {
+    "hc_lemma": "devan",
+    "french_equivalent": "devan",
+    "frequency": 45
+  },
+  {
+    "hc_lemma": "anvan",
+    "french_equivalent": "anvan",
+    "frequency": 45
+  },
+  {
+    "hc_lemma": "resevwa",
+    "french_equivalent": "resevwa",
+    "frequency": 45
+  },
+  {
+    "hc_lemma": "pòl",
+    "french_equivalent": "pòl",
+    "frequency": 44
+  },
+  {
+    "hc_lemma": "epòk",
+    "french_equivalent": "epòk",
+    "frequency": 44
+  },
+  {
+    "hc_lemma": "bò",
+    "french_equivalent": "bò",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "sèl",
+    "french_equivalent": "sèl",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "ye",
+    "french_equivalent": "être",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "dirije",
+    "french_equivalent": "dirije",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "kapasite",
+    "french_equivalent": "kapasite",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "pwòp",
+    "french_equivalent": "pwòp",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "sitiyasyon",
+    "french_equivalent": "sitiyasyon",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "bonjan",
+    "french_equivalent": "bonjan",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "anplis",
+    "french_equivalent": "anplis",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "efò",
+    "french_equivalent": "efò",
+    "frequency": 43
+  },
+  {
+    "hc_lemma": "je",
+    "french_equivalent": "je",
+    "frequency": 42
+  },
+  {
+    "hc_lemma": "mete",
+    "french_equivalent": "mete",
+    "frequency": 42
+  },
+  {
+    "hc_lemma": "dife",
+    "french_equivalent": "dife",
+    "frequency": 42
+  },
+  {
+    "hc_lemma": "al",
+    "french_equivalent": "al",
+    "frequency": 42
+  },
+  {
+    "hc_lemma": "kounye",
+    "french_equivalent": "kounye",
+    "frequency": 42
+  },
+  {
+    "hc_lemma": "pouse",
+    "french_equivalent": "pouse",
+    "frequency": 42
+  },
+  {
+    "hc_lemma": "batize",
+    "french_equivalent": "batize",
+    "frequency": 42
+  },
+  {
+    "hc_lemma": "vrèman",
+    "french_equivalent": "vrèman",
+    "frequency": 41
+  },
+  {
+    "hc_lemma": "priye",
+    "french_equivalent": "priye",
+    "frequency": 41
+  },
+  {
+    "hc_lemma": "grasa",
+    "french_equivalent": "grasa",
+    "frequency": 41
+  },
+  {
+    "hc_lemma": "priyè",
+    "french_equivalent": "priyè",
+    "frequency": 41
+  },
+  {
+    "hc_lemma": "lontan",
+    "french_equivalent": "lontan",
+    "frequency": 40
+  },
+  {
+    "hc_lemma": "kesyon",
+    "french_equivalent": "kesyon",
+    "frequency": 40
+  },
+  {
+    "hc_lemma": "soti",
+    "french_equivalent": "soti",
+    "frequency": 40
+  },
+  {
+    "hc_lemma": "met",
+    "french_equivalent": "met",
+    "frequency": 40
+  },
+  {
+    "hc_lemma": "mwayen",
+    "french_equivalent": "mwayen",
+    "frequency": 40
+  },
+  {
+    "hc_lemma": "plezi",
+    "french_equivalent": "plezi",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "fòs",
+    "french_equivalent": "fòs",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "fas",
+    "french_equivalent": "fas",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "mache",
+    "french_equivalent": "mache",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "koute",
+    "french_equivalent": "koute",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "jodi",
+    "french_equivalent": "jodi",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "pisans",
+    "french_equivalent": "pisans",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "medite",
+    "french_equivalent": "medite",
+    "frequency": 39
+  },
+  {
+    "hc_lemma": "sè",
+    "french_equivalent": "sè",
+    "frequency": 38
+  },
+  {
+    "hc_lemma": "rele",
+    "french_equivalent": "rele",
+    "frequency": 38
+  },
+  {
+    "hc_lemma": "kidonk",
+    "french_equivalent": "kidonk",
+    "frequency": 38
+  },
+  {
+    "hc_lemma": "anvi",
+    "french_equivalent": "anvi",
+    "frequency": 37
+  },
+  {
+    "hc_lemma": "parèt",
+    "french_equivalent": "parèt",
+    "frequency": 37
+  },
+  {
+    "hc_lemma": "akoz",
+    "french_equivalent": "akoz",
+    "frequency": 37
+  },
+  {
+    "hc_lemma": "nenpòt",
+    "french_equivalent": "nenpòt",
+    "frequency": 37
+  },
+  {
+    "hc_lemma": "apot",
+    "french_equivalent": "apot",
+    "frequency": 37
+  },
+  {
+    "hc_lemma": "kwè",
+    "french_equivalent": "kwè",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "pati",
+    "french_equivalent": "pati",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "pèdi",
+    "french_equivalent": "pèdi",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "aksyon",
+    "french_equivalent": "aksyon",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "peche",
+    "french_equivalent": "peche",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "preche",
+    "french_equivalent": "preche",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "kado",
+    "french_equivalent": "kado",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "sonje",
+    "french_equivalent": "sonje",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "obeyi",
+    "french_equivalent": "obeyi",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "sèlman",
+    "french_equivalent": "sèlman",
+    "frequency": 36
+  },
+  {
+    "hc_lemma": "ankò",
+    "french_equivalent": "encore",
+    "frequency": 35
+  },
+  {
+    "hc_lemma": "imajine",
+    "french_equivalent": "imajine",
+    "frequency": 35
+  },
+  {
+    "hc_lemma": "kreye",
+    "french_equivalent": "kreye",
+    "frequency": 35
+  },
+  {
+    "hc_lemma": "imite",
+    "french_equivalent": "imite",
+    "frequency": 35
+  },
+  {
+    "hc_lemma": "suiv",
+    "french_equivalent": "suiv",
+    "frequency": 35
+  },
+  {
+    "hc_lemma": "difisil",
+    "french_equivalent": "difisil",
+    "frequency": 35
+  },
+  {
+    "hc_lemma": "ankouraje",
+    "french_equivalent": "ankouraje",
+    "frequency": 35
+  },
+  {
+    "hc_lemma": "gade",
+    "french_equivalent": "gade",
+    "frequency": 34
+  },
+  {
+    "hc_lemma": "byenke",
+    "french_equivalent": "byenke",
+    "frequency": 34
+  },
+  {
+    "hc_lemma": "konsidere",
+    "french_equivalent": "konsidere",
+    "frequency": 34
+  },
+  {
+    "hc_lemma": "olye",
+    "french_equivalent": "olye",
+    "frequency": 34
+  },
+  {
+    "hc_lemma": "toutan",
+    "french_equivalent": "toutan",
+    "frequency": 34
+  },
+  {
+    "hc_lemma": "kèlkeswa",
+    "french_equivalent": "kèlkeswa",
+    "frequency": 34
+  },
+  {
+    "hc_lemma": "konsèy",
+    "french_equivalent": "konsèy",
+    "frequency": 34
+  },
+  {
+    "hc_lemma": "mouri",
+    "french_equivalent": "mouri",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "\"",
+    "french_equivalent": "\"",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "prezidan",
+    "french_equivalent": "prezidan",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "anyen",
+    "french_equivalent": "anyen",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "vil",
+    "french_equivalent": "vil",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "rapò",
+    "french_equivalent": "rapò",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "fòme",
+    "french_equivalent": "fòme",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "prepare",
+    "french_equivalent": "prepare",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "pwomès",
+    "french_equivalent": "pwomès",
+    "frequency": 33
+  },
+  {
+    "hc_lemma": "kouri",
+    "french_equivalent": "kouri",
+    "frequency": 32
+  },
+  {
+    "hc_lemma": "kit",
+    "french_equivalent": "kit",
+    "frequency": 32
+  },
+  {
+    "hc_lemma": "vwe",
+    "french_equivalent": "vwe",
+    "frequency": 32
+  },
+  {
+    "hc_lemma": "mirak",
+    "french_equivalent": "mirak",
+    "frequency": 32
+  },
+  {
+    "hc_lemma": "lakòz",
+    "french_equivalent": "lakòz",
+    "frequency": 32
+  },
+  {
+    "hc_lemma": "tonbe",
+    "french_equivalent": "tonbe",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "tande",
+    "french_equivalent": "tande",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "lakay",
+    "french_equivalent": "lakay",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "èd",
+    "french_equivalent": "èd",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "konsyans",
+    "french_equivalent": "konsyans",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "laverite",
+    "french_equivalent": "laverite",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "anvè",
+    "french_equivalent": "anvè",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "mari",
+    "french_equivalent": "mari",
+    "frequency": 31
+  },
+  {
+    "hc_lemma": "donk",
+    "french_equivalent": "donk",
+    "frequency": 30
+  },
+  {
+    "hc_lemma": "sans",
+    "french_equivalent": "sans",
+    "frequency": 30
+  },
+  {
+    "hc_lemma": "vre",
+    "french_equivalent": "vre",
+    "frequency": 30
+  },
+  {
+    "hc_lemma": "jèn",
+    "french_equivalent": "jèn",
+    "frequency": 30
+  },
+  {
+    "hc_lemma": "piske",
+    "french_equivalent": "piske",
+    "frequency": 30
+  },
+  {
+    "hc_lemma": "prèv",
+    "french_equivalent": "prèv",
+    "frequency": 30
+  },
+  {
+    "hc_lemma": "fwa",
+    "french_equivalent": "fwa",
+    "frequency": 29
+  },
+  {
+    "hc_lemma": "desizyon",
+    "french_equivalent": "desizyon",
+    "frequency": 29
+  },
+  {
+    "hc_lemma": "sanble",
+    "french_equivalent": "sanble",
+    "frequency": 29
+  },
+  {
+    "hc_lemma": "eseye",
+    "french_equivalent": "eseye",
+    "frequency": 29
+  },
+  {
+    "hc_lemma": "dout",
+    "french_equivalent": "dout",
+    "frequency": 29
+  },
+  {
+    "hc_lemma": "pwen",
+    "french_equivalent": "pwen",
+    "frequency": 29
+  },
+  {
+    "hc_lemma": "ameriken",
+    "french_equivalent": "ameriken",
+    "frequency": 28
+  },
+  {
+    "hc_lemma": "biden",
+    "french_equivalent": "biden",
+    "frequency": 28
+  }
+]

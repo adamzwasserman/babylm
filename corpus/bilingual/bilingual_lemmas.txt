@@ -1,0 +1,73 @@
+être to be | suis am | es are | est is | sommes are | êtes are | sont are | étais was | était was | étaient were | serai will be | sera will be | seront will be | sois be | soit be | été been | étant being
+avoir to have | ai have | as have | a has | avons have | avez have | ont have | avais had | avait had | avaient had | aurai will have | aura will have | aie have | ait have | eu had | ayant having
+aller to go | vais go | vas go | va goes | allons go | allez go | vont go | allais was going | allait was going | irai will go | ira will go | aille go | allé gone | allant going
+faire to do | fais do | fait does | faisons do | faites do | font do | faisais was doing | faisait was doing | ferai will do | fera will do | fasse do | faisant doing
+dire to say | dis say | dit says | disons say | dites say | disent say | disais was saying | disait was saying | dirai will say | dira will say | dise say | disant saying
+voir to see | vois see | voit sees | voyons see | voyez see | voient see | voyais was seeing | voyait was seeing | verrai will see | verra will see | voie see | vu seen | voyant seeing
+venir to come | viens come | vient comes | venons come | venez come | viennent come | venais was coming | venait was coming | viendrai will come | viendra will come | vienne come | venu come | venant coming
+pouvoir to be able to | peux can | peut can | pouvons can | pouvez can | peuvent can | pouvais could | pouvait could | pourrai will be able to | pourra will be able to | puisse can | pu been able to | pouvant being able to
+vouloir to want | veux want | veut wants | voulons want | voulez want | veulent want | voulais wanted | voulait wanted | voudrai will want | voudra will want | veuille want | voulu wanted | voulant wanting
+devoir to have to | dois must | doit must | devons must | devez must | doivent must | devais had to | devait had to | devrai will have to | devra will have to | doive must | dû had to | devant having to
+savoir to know | sais know | sait knows | savons know | savez know | savent know | savais knew | savait knew | saurai will know | saura will know | sache know | su known | sachant knowing
+connaître to know | connais know | connaît knows | connaissons know | connaissez know | connaissent know | connaissais knew | connaissait knew | connaîtrai will know | connaîtra will know | connaisse know | connu known | connaissant knowing
+prendre to take | prends take | prend takes | prenons take | prenez take | prennent take | prenais was taking | prenait was taking | prendrai will take | prendra will take | prenne take | pris taken | prenant taking
+donner to give | donne give | donnes give | donne gives | donnons give | donnez give | donnent give | donnais was giving | donnait was giving | donnerai will give | donnera will give | donné given | donnant giving
+manger to eat | mange eat | manges eat | mange eats | mangeons eat | mangez eat | mangent eat | mangeais was eating | mangeait was eating | mangerai will eat | mangera will eat | mangé eaten | mangeant eating
+rester to stay | reste stay | restes stay | reste stays | restons stay | restez stay | restent stay | restais was staying | restait was staying | resterai will stay | restera will stay | resté stayed | restant staying
+parler to speak | parle speak | parles speak | parle speaks | parlons speak | parlez speak | parlent speak | parlais was speaking | parlait was speaking | parlerai will speak | parlera will speak | parlé spoken | parlant speaking
+regarder to watch | regarde watch | regardes watch | regarde watches | regardons watch | regardez watch | regardent watch | regardais was watching | regardait was watching | regarderai will watch | regardera will watch | regardé watched | regardant watching
+trouver to find | trouve find | trouves find | trouve finds | trouvons find | trouvez find | trouvent find | trouvais was finding | trouvait was finding | trouverai will find | trouvera will find | trouvé found | trouvant finding
+mettre to put | mets put | met puts | mettons put | mettez put | mettent put | mettais was putting | mettait was putting | mettrai will put | mettra will put | mis put | mettant putting
+penser to think | pense think | penses think | pense thinks | pensons think | pensez think | pensent think | pensais was thinking | pensait was thinking | penserai will think | pensera will think | pensé thought | pensant thinking
+croire to believe | crois believe | croit believes | croyons believe | croyez believe | croient believe | croyais believed | croyait believed | croirai will believe | croira will believe | cru believed | croyant believing
+aimer to love | aime love | aimes love | aime loves | aimons love | aimez love | aiment love | aimais loved | aimait loved | aimerai will love | aimera will love | aimé loved | aimant loving
+jouer to play | joue play | joues play | joue plays | jouons play | jouez play | jouent play | jouais was playing | jouait was playing | jouerai will play | jouera will play | joué played | jouant playing
+dormir to sleep | dors sleep | dort sleeps | dormons sleep | dormez sleep | dorment sleep | dormais was sleeping | dormait was sleeping | dormirai will sleep | dormira will sleep | dormi slept | dormant sleeping
+lire to read | lis read | lit reads | lisons read | lisez read | lisent read | lisais was reading | lisait was reading | lirai will read | lira will read | lu read | lisant reading
+écrire to write | écris write | écrit writes | écrivons write | écrivez write | écrivent write | écrivais was writing | écrivait was writing | écrirai will write | écrira will write | écrit written | écrivant writing
+ouvrir to open | ouvre open | ouvres open | ouvre opens | ouvrons open | ouvrez open | ouvrent open | ouvrais was opening | ouvrait was opening | ouvrirai will open | ouvrira will open | ouvert opened | ouvrant opening
+tomber to fall | tombe fall | tombes fall | tombe falls | tombons fall | tombez fall | tombent fall | tombais was falling | tombait was falling | tomberai will fall | tombera will fall | tombé fallen | tombant falling
+courir to run | cours run | court runs | courons run | courez run | courent run | courais was running | courait was running | courrai will run | courra will run | couru run | courant running
+personne person | une personne a person | la personne the person | les personnes the people | des personnes some people | cette personne this person | ces personnes these people
+enfant child | un enfant a child | une enfant a child | les enfants the children | des enfants some children | cet enfant this child | ces enfants these children | le petit enfant the small child | les petits enfants the small children
+maison house | une maison a house | la maison the house | les maisons the houses | des maisons some houses | cette maison this house | ces maisons these houses | la grande maison the big house | les grandes maisons the big houses
+chose thing | une chose a thing | la chose the thing | les choses the things | des choses some things | cette chose this thing | ces choses these things
+temps time | le temps the time | du temps some time | beaucoup de temps a lot of time | peu de temps little time | tout le temps all the time | en même temps at the same time
+jour day | un jour a day | le jour the day | les jours the days | des jours some days | chaque jour every day | tous les jours every day
+homme man | un homme a man | les hommes the men | cet homme this man | ces hommes these men | le vieil homme the old man | les vieux hommes the old men
+femme woman | une femme a woman | la femme the woman | les femmes the women | des femmes some women | cette femme this woman | ces femmes these women
+eau water | de l'eau some water | l'eau the water | beaucoup d'eau a lot of water | peu d'eau little water | l'eau froide the cold water | l'eau chaude the hot water
+terre earth | la terre the earth | une terre a land | les terres the lands | par terre on the ground
+pays country | un pays a country | le pays the country | les pays the countries | des pays some countries | ce pays this country | ces pays these countries
+travail work | le travail the work | un travail a job | les travaux the works | du travail some work | au travail at work | sans travail without work
+argent money | de l'argent some money | l'argent the money | beaucoup d'argent a lot of money | peu d'argent little money
+ami friend | un ami a friend | une amie a friend | les amis the friends | les amies the friends | mon ami my friend | mon amie my friend | mes amis my friends | ses amis his friends
+animal animal | un animal an animal | les animaux the animals | cet animal this animal | ces animaux these animals | le petit animal the small animal | les petits animaux the small animals
+livre book | un livre a book | le livre the book | les livres the books | des livres some books | ce livre this book | ces livres these books
+arbre tree | un arbre a tree | les arbres the trees | le grand arbre the big tree | les grands arbres the big trees
+nourriture food | la nourriture the food | de la nourriture some food | beaucoup de nourriture a lot of food
+pronoms sujets subject pronouns | je I | tu you | il he | elle she | on one | nous we | vous you | ils they | elles they
+pronoms objets object pronouns | me me | te you | le him | la her | nous us | vous you | les them | lui to him | leur to them
+possessifs possessives | mon my | ma my | mes my | ton your | ta your | tes your | son his/her | sa his/her | ses his/her | notre our | nos our | votre your | vos your | leur their | leurs their
+démonstratifs demonstratives | ce this | cet this | cette this | ces these | celui this one | celle this one | ceux these ones | celles these ones | ceci this | cela that | ça that
+articles articles | le the | la the | les the | l' the | un a | une a | des some | du some | de la some | de l' some | au to the | aux to the
+négation negation | ne pas not | ne plus no longer | ne jamais never | ne rien nothing | ne personne nobody | ne aucun no | ne que only
+interrogatifs question words | qui who | que what | quoi what | où where | quand when | comment how | pourquoi why | combien how much | quel which | quelle which | quels which | quelles which
+prépositions prepositions | dans in | sur on | sous under | avec with | sans without | pour for | par by | entre between | vers toward | chez at the home of | devant in front of | derrière behind | avant before | après after
+conjonctions conjunctions | et and | ou or | mais but | donc so | car because | si if | que that | comme as/like | quand when | parce que because | bien que although | pour que so that | avant que before
+adverbes adverbs | très very | bien well | mal badly | aussi also | encore still/again | toujours always | jamais never | déjà already | souvent often | beaucoup a lot | peu little | plus more | moins less | ici here | là there | maintenant now | aujourd'hui today | hier yesterday | demain tomorrow | vite quickly | lentement slowly
+grand big | grand big | grande big | grands big | grandes big | le grand the big | la grande the big | les grands the big | les grandes the big | plus grand bigger | le plus grand the biggest
+petit small | petit small | petite small | petits small | petites small | plus petit smaller | le plus petit the smallest
+bon good | bon good | bonne good | bons good | bonnes good | meilleur better | le meilleur the best | meilleure better | la meilleure the best
+nouveau new | nouveau new | nouvel new | nouvelle new | nouveaux new | nouvelles new
+vieux old | vieux old | vieil old | vieille old | vieilles old | plus vieux older | le plus vieux the oldest
+beau beautiful | beau beautiful | bel beautiful | belle beautiful | beaux beautiful | belles beautiful
+blanc white | blanc white | blanche white | blancs white | blanches white
+noir black | noir black | noire black | noirs black | noires black
+rouge red | rouge red | rouges red
+chaud hot | chaud hot | chaude hot | chauds hot | chaudes hot
+froid cold | froid cold | froide cold | froids cold | froides cold
+heureux happy | heureux happy | heureuse happy | heureuses happy
+triste sad | triste sad | tristes sad
+long long | long long | longue long | longs long | longues long
+fort strong | fort strong | forte strong | forts strong | fortes strong

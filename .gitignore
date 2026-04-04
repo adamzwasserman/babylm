@@ -1,0 +1,45 @@
+# Large data files
+corpus/childes_french/
+corpus/babylm_official/
+corpus/babylm_fra/raw/
+corpus/supplementary/
+corpus/final/
+corpus/**/*.txt
+corpus/**/*.jsonl
+corpus/**/*.npy
+corpus/**/*.gz
+
+# UD treebanks (cloned separately)
+corpus/haitian_creole/UD_*/
+corpus/haitian_creole/ud_haitian.zip
+
+# Models and tokenizer
+models/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+uv.lock
+
+# Eval pipeline and baselines (cloned separately)
+eval/evaluation-pipeline*/
+eval/baseline-pretraining/
+
+# Logs
+logs/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+
+# Keep these
+!corpus/haitian_creole/oracle_vocabulary.json
+!corpus/haitian_creole/oracle_french_lemmas.txt
+!corpus/bilingual/bilingual_lemmas.txt
+!corpus/bilingual/bilingual_metadata.json
+!corpus/babylm_fra/oracle_comparison.json
