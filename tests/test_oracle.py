@@ -132,6 +132,21 @@ def test_density_handles_french_accents(density):
     assert density(sent, oracle) == pytest.approx(2 / 3)
 
 
+def test_density_preserves_oe_ligature(density):
+    """Regression test: the punctuation-stripping regex used to drop the
+    œ ligature, mapping "cœur" to "cur" and missing any oracle entry for
+    the lemma. Same for æ and ÿ."""
+    sent = "cœur sœur œuvre"
+    oracle = {"cœur", "sœur", "œuvre"}
+    assert density(sent, oracle) == pytest.approx(1.0)
+
+
+def test_density_preserves_ae_ligature(density):
+    sent = "tænia"
+    oracle = {"tænia"}
+    assert density(sent, oracle) == pytest.approx(1.0)
+
+
 def test_density_lowercases_input(density):
     sent = "Le Chat Dort"
     oracle = {"le", "chat"}

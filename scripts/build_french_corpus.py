@@ -54,6 +54,14 @@ def load_oracle_lemmas():
     print(f"Loaded {len(lemmas)} oracle lemmas")
     return lemmas
 
+# Lowercase French letter class used to strip punctuation before oracle
+# lookup. Includes the ligatures (œ, æ) and diaeresis-y (ÿ) that appear
+# in core vocabulary like "cœur", "œuvre", "sœur", "œuf" — without these
+# the regex would map "cœur" to "cur" and miss any oracle entry for it.
+_FR_LOWER_LETTERS = r"a-zàâäéèêëîïôùûüçœæÿ"
+_FR_LETTERS_RE = re.compile(rf"[^{_FR_LOWER_LETTERS}]")
+
+
 def oracle_density(sentence, oracle_lemmas):
     """
     Compute what fraction of words in the sentence are oracle lemmas.
@@ -64,7 +72,7 @@ def oracle_density(sentence, oracle_lemmas):
     words = sentence.lower().split()
     if not words:
         return 0.0
-    hits = sum(1 for w in words if re.sub(r"[^a-zàâäéèêëîïôùûüç]", "", w) in oracle_lemmas)
+    hits = sum(1 for w in words if _FR_LETTERS_RE.sub("", w) in oracle_lemmas)
     return hits / len(words)
 
 def load_childes_sentences():
