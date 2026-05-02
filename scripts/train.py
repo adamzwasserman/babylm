@@ -23,13 +23,13 @@ import os
 import time
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
+from torch.utils.data import DataLoader, Dataset
 from transformers import (
     GPT2Config,
     GPT2LMHeadModel,
     PreTrainedTokenizerFast,
 )
-from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 
 # Paths: auto-detect local vs remote
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -119,11 +119,11 @@ class TextDataset(Dataset):
         with open(corpus_path, encoding="utf-8") as f:
             text = f.read()
 
-        eos_id = tokenizer.eos_token_id
         all_ids = tokenizer.encode(text)
 
-        # Insert EOS between documents (approximate: treat double newlines as boundaries)
-        # For a single-file corpus, we just chunk continuously
+        # Naive contiguous chunking: no document boundaries, no EOS insertion.
+        # The corpus is shuffled at sentence level upstream
+        # (build_french_corpus.py), so within-chunk locality is already broken.
         n_chunks = len(all_ids) // seq_len
         self.chunks = []
         for i in range(n_chunks):
@@ -277,7 +277,7 @@ def train(args):
     for epoch in range(args.epochs):
         print(f"\n=== Epoch {epoch + 1}/{args.epochs} ===")
 
-        for batch_idx, batch in enumerate(dataloader):
+        for batch in dataloader:
             global_step += 1
 
             input_ids = batch["input_ids"].to(device)
@@ -331,7 +331,7 @@ def train(args):
     save_checkpoint(model, tokenizer, words_processed, MODELS_DIR)
     print(f"\nTraining complete. {words_processed/1e6:.1f}M words processed.")
     print(f"Total time: {(time.time() - t0)/3600:.1f}h")
-    print(f"\nTo evaluate: ./eval_zero_shot.sh models/chck_95M causal")
+    print("\nTo evaluate: ./eval_zero_shot.sh models/chck_95M causal")
 
 
 if __name__ == "__main__":
