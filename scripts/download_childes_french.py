@@ -11,6 +11,7 @@ This gives us ~2.1M words of gold child-directed speech.
 """
 
 import os
+
 import pymysql
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "corpus", "childes_french")
@@ -87,12 +88,12 @@ def download_childes_french():
     conn.close()
 
     total_words = sum(word_counts.values())
-    print(f"\n=== CHILDES French Summary ===")
+    print("\n=== CHILDES French Summary ===")
     for corpus, count in sorted(word_counts.items(), key=lambda x: -x[1]):
         if count > 0:
             print(f"  {corpus}: {count:,} words")
     print(f"  TOTAL: {total_words:,} words ({total_utterances:,} utterances)")
-    print(f"\n  Target: 90-100M words for BabyLM Strict track")
+    print("\n  Target: 90-100M words for BabyLM Strict track")
     print(f"  CHILDES provides ~{total_words/1_000_000:.1f}M words of gold CDS")
 
     return word_counts
