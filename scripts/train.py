@@ -20,8 +20,10 @@ import argparse
 import json
 import math
 import os
+import random
 import time
 
+import numpy as np
 import torch
 from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
 from torch.utils.data import DataLoader, Dataset
@@ -30,6 +32,23 @@ from transformers import (
     GPT2LMHeadModel,
     PreTrainedTokenizerFast,
 )
+
+
+def set_seed(seed: int) -> None:
+    """Seed Python, NumPy, and PyTorch for reproducible training.
+
+    Note: the submitted checkpoint chck_92M_epoch3 was trained before
+    explicit seeding was added, so re-running this script with the
+    default seed will not produce a bit-identical checkpoint to the
+    one on the BabyLM leaderboard. The canonical model is the one
+    released on the HuggingFace Hub; this seed is for reproducibility
+    of future runs (ablations, replications, follow-up experiments).
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 # Paths: auto-detect local vs remote
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +83,8 @@ def parse_args():
     p.add_argument("--resume", default=None, help="Resume from checkpoint directory")
     p.add_argument("--vocab_size", type=int, default=50000)
     p.add_argument("--device", default="auto")
+    p.add_argument("--seed", type=int, default=42,
+                    help="Random seed for Python, NumPy, and PyTorch")
     return p.parse_args()
 
 
@@ -203,8 +224,9 @@ def estimate_words_per_token(corpus_path, tokenizer, sample_lines=10000):
 
 
 def train(args):
+    set_seed(args.seed)
     device = get_device(args.device)
-    print(f"Device: {device}")
+    print(f"Device: {device} | seed: {args.seed}")
 
     os.makedirs(MODELS_DIR, exist_ok=True)
 
