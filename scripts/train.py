@@ -172,12 +172,11 @@ def get_lr(step, warmup_steps, max_lr, total_steps):
 
 def save_checkpoint(model, tokenizer, words_processed, models_dir):
     """Save model in HuggingFace format for eval pipeline compatibility."""
-    # Determine checkpoint name
+    # Both branches of the original if/else produced identical names; keep
+    # the single int-floor formatting that matches the existing chck_NM
+    # pattern on disk.
     millions = words_processed / 1_000_000
-    if millions < 10:
-        name = f"chck_{int(millions)}M"
-    else:
-        name = f"chck_{int(millions)}M"
+    name = f"chck_{int(millions)}M"
 
     save_dir = os.path.join(models_dir, name)
     model.save_pretrained(save_dir)
