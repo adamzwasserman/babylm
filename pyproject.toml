@@ -1,7 +1,7 @@
 [project]
 name = "babylm"
 version = "0.1.0"
-description = "Born Speaking French: BabyLM 2026 submission"
+description = "Right Tool, Right Job: BabyLM 2026 Strict-track submission (MÉTRON-FR)"
 requires-python = ">=3.13"
 dependencies = [
     "datasets",

@@ -1,14 +1,16 @@
-# CLAUDE.md — Born Speaking French (BabyLM 2026)
+# CLAUDE.md — Right Tool, Right Job (BabyLM 2026)
 
 This file provides full context for Claude Code sessions in this repository.
 
 ## Project Identity
 
 **Paper title:**
-"Born Speaking French: Why the Crib Beats the Cluster When the Language is Right"
+"Right Tool, Right Job: Why Training Language Matters More Than Training Data"
 
 **French subtitle:**
-"La langue de Molière, quatre cents ans plus tard : toujours redoutable"
+"Les bons outils font les bons ouvriers"
+
+**Submitted model:** MÉTRON-FR (125M GPT-2, French-only, 92.5M words). The earlier project name was "Born Speaking French"; the manuscript was reframed during the writing phase, but the corpus and training pipeline below are unchanged.
 
 **Target venue:** BabyLM Workshop at EMNLP 2026, Budapest, Hungary (Oct 24-29)
 
@@ -86,18 +88,24 @@ babylm/
     childes_french/           -- child-directed speech from CHILDES
     babylm_official/          -- official BabyLM corpus (reference only)
     haitian_creole/           -- HC oracle vocabulary
+    bilingual/                -- FR->EN lemma bridge for Harness C
     final/                    -- assembled training corpus
   scripts/
     setup.sh                  -- environment setup
+    cloud_setup.sh            -- vast.ai bootstrap
+    deploy_to_vast.sh         -- push code+data to vast.ai instance
+    sync_checkpoints.sh       -- pull checkpoints back from vast.ai
     download_babylm_corpus.py -- fetch official corpus
-    download_childes_french.py-- fetch CHILDES French CDS
-    build_creole_oracle.py    -- build HC vocabulary oracle
+    download_childes_french.py-- fetch CHILDES French CDS (env-var creds)
+    build_creole_oracle.py    -- build HC vocabulary oracle (top-300 lemmas)
+    build_bilingual_lemmas.py -- 73-lemma FR/EN bridge for Harness C
+    build_french_corpus.py    -- assemble final corpus, oracle-weighted
+    analyze_caillou_oracle.py -- Caillou-vs-HC convergence check
     count_words.py            -- BabyLM word budget tracker
-    build_french_corpus.py    -- assemble final corpus (TODO)
-    train.py                  -- training script (TODO)
+    train.py                  -- 125M GPT-2 trainer + BPE tokenizer
   eval/
-    evaluation-pipeline/      -- cloned BabyLM eval repo
-  models/                     -- trained checkpoints
+    evaluation-pipeline/      -- cloned BabyLM eval repo (TODO: integrate)
+  models/                     -- trained checkpoints (HF Hub)
   paper/                      -- LaTeX source
 ```
 

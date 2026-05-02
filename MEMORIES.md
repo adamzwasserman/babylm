@@ -65,8 +65,15 @@ a filter only.
 
 ## Paper Title
 
-English: "Born Speaking French: Why the Crib Beats the Cluster When the Language is Right"
-French:  "La langue de Molière, quatre cents ans plus tard : toujours redoutable"
+English: "Right Tool, Right Job: Why Training Language Matters More Than Training Data"
+French:  "Les bons outils font les bons ouvriers"
+
+Submitted model name: MÉTRON-FR.
+
+The earlier working title was "Born Speaking French: Why the Crib Beats the
+Cluster When the Language is Right" with French subtitle "La langue de Molière,
+quatre cents ans plus tard : toujours redoutable". The reframing during writing
+was about the framing, not the experiment.
 
 "Morphology Eats Scale for Breakfast" is the title of a DIFFERENT paper
 (the 7-language ablation from fractal-language). Do not confuse them.
@@ -84,34 +91,32 @@ French:  "La langue de Molière, quatre cents ans plus tard : toujours redoutabl
 ## Current State of Work
 
 ### Done
-- MASTER_PLAN.md written
-- CLAUDE.md and MEMORIES.md written
-- Directory structure created
-- requirements.txt written
-- .gitignore written
-- All initial scripts written:
-  - scripts/setup.sh
+- MASTER_PLAN.md, CLAUDE.md, MEMORIES.md written
+- Directory structure, requirements.txt, .gitignore
+- Data pipeline scripts:
+  - scripts/setup.sh, cloud_setup.sh, deploy_to_vast.sh, sync_checkpoints.sh
   - scripts/download_babylm_corpus.py
-  - scripts/download_childes_french.py
-  - scripts/build_creole_oracle.py
+  - scripts/download_childes_french.py (creds via env vars)
+  - scripts/build_creole_oracle.py (top-300 HC lemmas)
+  - scripts/build_bilingual_lemmas.py (73-lemma FR/EN bridge)
+  - scripts/build_french_corpus.py (oracle-weighted, harnesses A/B/C)
+  - scripts/analyze_caillou_oracle.py (convergence check)
   - scripts/count_words.py
-  - scripts/build_french_corpus.py  <-- CRITICAL: assembles final corpus
-- paper/prior_work/README.md written (points to fractal-language)
+- scripts/train.py: 125M GPT-2 trainer with BPE tokenizer training,
+  linear warmup + cosine decay, BabyLM checkpoint cadence
+- Submitted model: chck_92M_epoch3 (grammatical-competence peak), 5 epochs
+  on 92.5M French words
 
-### Not Yet Done
-- setup.sh not yet executed (run this first)
-- No corpus downloaded yet
-- Eval pipeline not yet cloned
-- train.py not yet written
-- No model trained yet
-
-### Next Immediate Actions
-1. Run: cd /Users/adam/dev/babylm && bash scripts/setup.sh
-2. Run: python scripts/download_childes_french.py
-3. Run: python scripts/build_creole_oracle.py
-4. Run: python scripts/build_french_corpus.py  (will auto-download CC-100 if needed)
-5. Run: python scripts/count_words.py corpus/final/train_french.txt
-6. Wait for BabyLM eval pipeline (early April 2026) then clone it
+### Not Yet Done (post-submission cleanup)
+- BabyLM 2026 official eval pipeline integration (clone target: eval/)
+- Tokenizer-ablation harness (the +7.7pp finding in §6.4 of the paper) is
+  not in this repo: 16K CDS / 50K Wiki / 50K CDS / 64K CDS sweep was run
+  out-of-tree and needs to be reproduced as scripts/run_tokenizer_swap.py
+- QFrBLiMP / QFrCoLA evaluation harness
+- BLI Procrustes alignment script (§5.1 of paper)
+- Cross-lingual GLUE 4-lever grid (§5.2 of paper)
+- §6 negative-result ablations: dict-axioms placebo, EWoK 4 interventions,
+  v3 minimal ablation
 
 ---
 

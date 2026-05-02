@@ -1,8 +1,11 @@
-# Born Speaking French: BabyLM 2026 Submission
+# Right Tool, Right Job: BabyLM 2026 Submission
 
 ## Title
-**Born Speaking French: Why the Crib Beats the Cluster When the Language is Right**
-*La langue de Molière, quatre cents ans plus tard : toujours redoutable*
+**Right Tool, Right Job: Why Training Language Matters More Than Training Data**
+*Les bons outils font les bons ouvriers*
+
+(Earlier working title: "Born Speaking French". Reframed during writing; corpus
+strategy and architecture below are unchanged.)
 
 ## Core Claim
 Training exclusively on French at child-scale (≤100M words) produces a model that
