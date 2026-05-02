@@ -1,30 +1,48 @@
 """
 Download French child-directed speech from CHILDES via childes-db (public MySQL).
 
-childes-db provides public read-only access to all CHILDES data:
-  Host: 52.37.132.215
-  User: childesdb / Password: uy5z4hf7ihBjf
-  Database: 2021.1
+childes-db provides public read-only access to all CHILDES data. The host and
+read-only credentials are documented at https://childes-db.stanford.edu and on
+the project README; we read them from environment variables rather than
+hardcoding so the source stays free of credentials.
+
+Set before running:
+    export CHILDESDB_HOST=...
+    export CHILDESDB_USER=...
+    export CHILDESDB_PASSWORD=...
+    export CHILDESDB_DATABASE=2021.1   # optional, defaults to 2021.1
 
 We extract adult utterances (MOT, FAT, INV, EXP, etc.) from all French corpora.
 This gives us ~2.1M words of gold child-directed speech.
 """
 
 import os
+import sys
 import pymysql
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "corpus", "childes_french")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-DB_CONFIG = {
-    "host": "52.37.132.215",
-    "user": "childesdb",
-    "password": "uy5z4hf7ihBjf",
-    "database": "2021.1",
-    "charset": "utf8mb4",
-    "connect_timeout": 30,
-    "read_timeout": 120,
-}
+
+def _db_config():
+    required = ("CHILDESDB_HOST", "CHILDESDB_USER", "CHILDESDB_PASSWORD")
+    missing = [k for k in required if not os.environ.get(k)]
+    if missing:
+        sys.exit(
+            f"missing env var(s): {', '.join(missing)}. See module docstring."
+        )
+    return {
+        "host": os.environ["CHILDESDB_HOST"],
+        "user": os.environ["CHILDESDB_USER"],
+        "password": os.environ["CHILDESDB_PASSWORD"],
+        "database": os.environ.get("CHILDESDB_DATABASE", "2021.1"),
+        "charset": "utf8mb4",
+        "connect_timeout": 30,
+        "read_timeout": 120,
+    }
+
+
+DB_CONFIG = None  # populated lazily inside download_childes_french()
 
 # Adult speaker roles (child-directed speech)
 ADULT_ROLES = ("Mother", "Father", "Investigator", "Adult", "Experimenter",
@@ -32,10 +50,11 @@ ADULT_ROLES = ("Mother", "Father", "Investigator", "Adult", "Experimenter",
 
 
 def download_childes_french():
+    config = _db_config()
     print("=== Downloading CHILDES French via childes-db ===")
-    print(f"Connecting to {DB_CONFIG['host']}...")
+    print(f"Connecting to {config['host']}...")
 
-    conn = pymysql.connect(**DB_CONFIG)
+    conn = pymysql.connect(**config)
     cursor = conn.cursor()
 
     # Get all French corpora
