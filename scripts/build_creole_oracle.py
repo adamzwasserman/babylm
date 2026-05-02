@@ -18,9 +18,8 @@ Sources for Haitian Creole text:
 Output: top_lemmas.json -- the oracle vocabulary list
 """
 
-import os
 import json
-import re
+import os
 from collections import Counter
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "corpus", "haitian_creole")
@@ -44,7 +43,8 @@ KNOWN_HC_FRENCH_COGNATES = {
     "di": "dire",
     "wè": "voir",
     "konnen": "connaître/savoir",
-    "manje": "manger",
+    # "manje" intentionally appears once below (Basic nouns) with both
+    # the verb and noun mappings: "manger" + "nourriture".
     "bay": "donner",
     "pran": "prendre",
     "rete": "rester",
@@ -115,7 +115,7 @@ def download_ud_haitian():
     import subprocess
     ud_url = "https://github.com/UniversalDependencies/UD_Haitian_Creole-Autogramm/archive/refs/heads/main.zip"
     out_zip = os.path.join(OUTPUT_DIR, "ud_haitian.zip")
-    
+
     print("Downloading UD Haitian Creole treebank...")
     try:
         subprocess.run(["curl", "-L", "-o", out_zip, ud_url], check=True, capture_output=True)
@@ -129,7 +129,7 @@ def download_ud_haitian():
 def extract_lemmas_from_conllu(conllu_path):
     """Extract lemma frequencies from CoNLL-U format."""
     lemma_counts = Counter()
-    
+
     with open(conllu_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -139,14 +139,14 @@ def extract_lemmas_from_conllu(conllu_path):
                     lemma = parts[2].lower()
                     if lemma not in ("_", ""):
                         lemma_counts[lemma] += 1
-    
+
     return lemma_counts
 
 def build_oracle_vocabulary():
     """Build the Haitian Creole oracle vocabulary."""
-    
+
     all_counts = Counter()
-    
+
     # Load from all UD treebanks
     ud_dirs = [
         os.path.join(OUTPUT_DIR, "UD_Haitian_Creole-Autogramm-main"),
@@ -160,16 +160,16 @@ def build_oracle_vocabulary():
                     counts = extract_lemmas_from_conllu(path)
                     all_counts.update(counts)
                     print(f"  Extracted {len(counts)} lemma types from {fname}")
-    
+
     # Add seed list regardless
-    for hc_lemma, french_equiv in KNOWN_HC_FRENCH_COGNATES.items():
+    for hc_lemma in KNOWN_HC_FRENCH_COGNATES:
         # Boost seed items if not already in corpus counts
         if hc_lemma not in all_counts:
             all_counts[hc_lemma] = 100  # synthetic frequency
-    
+
     # Get top 300
     top_lemmas = all_counts.most_common(300)
-    
+
     # Map to French equivalents where known
     oracle = []
     for lemma, count in top_lemmas:
@@ -179,18 +179,18 @@ def build_oracle_vocabulary():
             "french_equivalent": french,
             "frequency": count
         })
-    
+
     return oracle
 
 def save_oracle(oracle):
     """Save oracle vocabulary as JSON and plain text."""
-    
+
     # JSON version (full detail)
     json_path = os.path.join(OUTPUT_DIR, "oracle_vocabulary.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(oracle, f, ensure_ascii=False, indent=2)
     print(f"\nOracle saved to {json_path}")
-    
+
     # Plain text version (French equivalents only, for corpus filtering)
     txt_path = os.path.join(OUTPUT_DIR, "oracle_french_lemmas.txt")
     with open(txt_path, "w", encoding="utf-8") as f:
@@ -203,28 +203,28 @@ def save_oracle(oracle):
                     f.write(french + "\n")
                     seen.add(french)
     print(f"French lemma list saved to {txt_path}")
-    
+
     # Summary
-    print(f"\n=== Oracle Vocabulary Summary ===")
+    print("\n=== Oracle Vocabulary Summary ===")
     print(f"Total HC lemmas: {len(oracle)}")
-    print(f"\nTop 20 by frequency:")
+    print("\nTop 20 by frequency:")
     for item in oracle[:20]:
         print(f"  {item['hc_lemma']:15} -> {item['french_equivalent']:20} (freq: {item['frequency']})")
-    
+
     return json_path, txt_path
 
 if __name__ == "__main__":
     print("=== Building Haitian Creole Vocabulary Oracle ===\n")
-    
+
     # Try to get UD treebank data
     download_ud_haitian()
-    
+
     # Build oracle
     oracle = build_oracle_vocabulary()
-    
+
     # Save
     json_path, txt_path = save_oracle(oracle)
-    
-    print(f"\n=== Next Step ===")
+
+    print("\n=== Next Step ===")
     print("Run scripts/build_french_corpus.py to use this oracle")
     print("to oversample high-signal sentences in the French training corpus.")
