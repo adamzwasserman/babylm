@@ -18,7 +18,8 @@
 # Prereqs:
 #   - venv activated (or .venv/ in project root, auto-sourced)
 #   - corpus at corpus/final/train_french.txt
-#   - WANDB_API_KEY exported (or pass --wandb_mode=offline via TRAIN_EXTRA)
+#   - wandb logged in locally via `wandb login` (or pass
+#     TRAIN_EXTRA="--wandb_mode disabled" to skip wandb entirely)
 #
 # Optional env vars:
 #   N_GPUS         override GPU count (default: nvidia-smi -L | wc -l)

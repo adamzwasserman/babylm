@@ -140,11 +140,14 @@ This matches the architecture in MASTER_PLAN.md and fractal-language/CLAUDE.md.
 
 ## Reproducing §4 of the paper (5 seeds, headline results)
 
-One command:
+One-time setup on the host: `wandb login` (stores the API key in `~/.netrc`,
+which `wandb.init()` picks up automatically). Then:
 
 ```
-WANDB_API_KEY=... bash scripts/run_paper_part1.sh 42 43 44 45 46
+bash scripts/run_paper_part1.sh 42 43 44 45 46
 ```
+
+To skip wandb entirely, prepend `TRAIN_EXTRA="--wandb_mode disabled"`.
 
 The orchestrator runs 7 phases (train 5 seeds, then QFrBLiMP, QFrCoLA, BabyLM
 suite, BLI Procrustes, cross-lingual GLUE, aggregate). Each phase skips
@@ -184,9 +187,10 @@ seed. For the paper we report mean +/- std across 5 seeds. Workflow:
    tokenizer at `models/tokenizer/`. All seeds reuse it; this avoids both a
    race on `tokenizer.json` between parallel seeds and an extra source of
    variance.
-2. Export `WANDB_API_KEY` and `wandb login`. Training metrics
-   (loss, ppl, lr, tokens/sec, words processed, checkpoint events) stream to
-   the `babylm-2026` wandb project under run name `seed{S}`.
+2. Run `wandb login` once on this host. The key is stored in `~/.netrc` and
+   `wandb.init()` picks it up automatically; no env var to export. Training
+   metrics (loss, ppl, lr, tokens/sec, words processed, checkpoint events)
+   stream to the `babylm-2026` wandb project under run name `seed{S}`.
 3. `bash scripts/run_multi_seed.sh 1 2 3 4 5` on a multi-GPU host.
    `nvidia-smi -L | wc -l` auto-detects N; the script launches in waves of N
    seeds, one per GPU via `CUDA_VISIBLE_DEVICES`. Per-seed logs go to

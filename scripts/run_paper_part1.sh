@@ -23,8 +23,7 @@
 #
 # Environment knobs:
 #   N_GPUS         override GPU count for parallel trainings (default: nvidia-smi -L)
-#   WANDB_API_KEY  must be set for online wandb mode (or pass TRAIN_EXTRA="--wandb_mode disabled")
-#   TRAIN_EXTRA    extra flags forwarded to train.py (e.g. epoch override)
+#   TRAIN_EXTRA    extra flags forwarded to train.py (e.g. --wandb_mode disabled)
 #   CKPT_NAME      checkpoint name to evaluate (default: chck_92M)
 #   FORCE          re-run a phase even if the expected output exists
 #   PHASE          run only one phase number; otherwise run all
@@ -101,9 +100,12 @@ if ! skip_phase 0; then
         echo "Building shared tokenizer..."
         python scripts/build_tokenizer.py
     fi
-    if [ -z "${WANDB_API_KEY:-}" ]; then
-        echo "WARN: WANDB_API_KEY not set. Pass TRAIN_EXTRA=\"--wandb_mode disabled\""
-        echo "      to skip wandb, or 'wandb login' interactively."
+    # wandb credentials are read from the local wandb config (~/.netrc after
+    # `wandb login`). Run `wandb login` once on this host before launching;
+    # to skip wandb entirely, pass TRAIN_EXTRA="--wandb_mode disabled".
+    if ! python -c "import netrc, os; nrc = netrc.netrc(os.path.expanduser('~/.netrc')); nrc.authenticators('api.wandb.ai') or exit(1)" 2>/dev/null; then
+        echo "WARN: no wandb credentials found in ~/.netrc."
+        echo "      Run 'wandb login' once, or pass TRAIN_EXTRA=\"--wandb_mode disabled\"."
     fi
     echo "Pre-flight OK. Seeds: ${SEEDS[*]}, ckpt name: $CKPT_NAME"
 fi
