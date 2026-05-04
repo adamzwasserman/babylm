@@ -24,6 +24,9 @@ __pycache__/
 .DS_Store
 uv.lock
 
+# Local env file (copy from .env.example)
+.env
+
 # Eval pipeline and baselines (cloned separately)
 eval/evaluation-pipeline*/
 eval/baseline-pretraining/

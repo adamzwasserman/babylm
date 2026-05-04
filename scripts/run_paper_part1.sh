@@ -46,6 +46,16 @@ if [ -d ".venv" ]; then
     source .venv/bin/activate
 fi
 
+# Auto-load .env (CHILDESDB_*, wandb knobs, etc.) so the user does not have
+# to export them manually. .env is gitignored; copy from .env.example on
+# first use: `cp .env.example .env`.
+if [ -f ".env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+fi
+
 # Seeds: positional args, else SEEDS env var, else 42..46
 if [ "$#" -gt 0 ]; then
     SEEDS=("$@")
