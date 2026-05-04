@@ -105,13 +105,21 @@ babylm/
     count_words.py            -- BabyLM word budget tracker
     build_tokenizer.py        -- pre-train the shared 50k BPE tokenizer
     train.py                  -- 125M GPT-2 trainer (single seed)
-    aggregate_seeds.py        -- compute mean +/- std across seed eval JSONs
+    aggregate_seeds.py        -- compute mean +/- std across seed eval JSONs (generic)
+    aggregate_paper_tables.py -- emit Tables 1-3 LaTeX + §4.1/§4.2 prose from per-seed JSONs
     _checkpoint_schedule.py   -- shared CHECKPOINT_WORDS + ckpt-index helper
+    eval_babylm_suite.py      -- wrap the BabyLM 2025 pipeline (BLiMP, BLiMP-Sup, EWoK, GLUE)
+    run_bli_procrustes.py     -- §4.3 closed-form orthogonal Procrustes vs GPT-2 EN
+    run_xling_glue.py         -- §4.4 LoRA grid (5 levers x 5 tasks) for cross-lingual GLUE
+    run_paper_part1.sh        -- §4 master orchestrator: train 5 seeds + all evals + tables
   eval/
-    evaluation-pipeline/      -- cloned BabyLM eval repo (clone after April 2026 release)
+    qfrblimp/run.py           -- §4.1 zero-shot QFrBLiMP harness with bucket aggregation
+    qfrcola/run.py            -- §4.1 QFrCoLA fine-tune + accuracy + MCC
+    evaluation-pipeline-2025/ -- cloned BabyLM 2025 pipeline (auto-cloned by eval_babylm_suite.py)
   models/
     tokenizer/                -- shared BPE tokenizer (one for all seeds)
     seed{S}/chck_*M/          -- per-seed HuggingFace checkpoints
+  eval_results/               -- per-seed JSONs (one file per benchmark)
   paper/                      -- LaTeX source
   tests/                      -- pytest suite covering pure helpers
 ```
@@ -127,6 +135,43 @@ direct comparability):
 - Joint 50k BPE tokenizer (French only for this project)
 
 This matches the architecture in MASTER_PLAN.md and fractal-language/CLAUDE.md.
+
+---
+
+## Reproducing §4 of the paper (5 seeds, headline results)
+
+One command:
+
+```
+WANDB_API_KEY=... bash scripts/run_paper_part1.sh 42 43 44 45 46
+```
+
+The orchestrator runs 7 phases (train 5 seeds, then QFrBLiMP, QFrCoLA, BabyLM
+suite, BLI Procrustes, cross-lingual GLUE, aggregate). Each phase skips
+itself if its expected output already exists, so a partial run is resumable.
+`PHASE=N` runs a single phase; `SKIP_PHASES="6"` skips one. Final output:
+`paper_tables.tex` and `paper_tables.md` (Tables 1-3 + §4.1/§4.2 prose).
+
+Per-script entry points (for ad-hoc runs):
+
+| Script | Section | Output |
+|---|---|---|
+| `eval/qfrblimp/run.py` | §4.1 Table 1 | `seed{S}_qfrblimp.json` |
+| `eval/qfrcola/run.py` | §4.1 prose | `seed{S}_qfrcola.json` |
+| `scripts/eval_babylm_suite.py` | §4.2 prose | `seed{S}_babylm.json` |
+| `scripts/run_bli_procrustes.py` | §4.3 Table 2 | `seed{S}_bli_<target>.json` |
+| `scripts/run_xling_glue.py` | §4.4 Table 3 | `seed{S}_xglue_<lever>_<task>.json` |
+| `scripts/aggregate_paper_tables.py` | tables out | `paper_tables.tex` + `.md` |
+
+External dataset assumptions (override via CLI flags if names differ):
+
+- `BaselineQuebec/QFrBLiMP` (1761 minimal pairs, paradigm field)
+- `BaselineQuebec/QFrCoLA` (acceptability judgments + ood split)
+- `BaselineQuebec/glue-fr` (translated GLUE for the D+C lever)
+- `BaselineQuebec/fr_en_seed_dict` (242 verb pairs for BLI)
+
+If your published HF names differ, point each harness at the right dataset
+via `--dataset`, `--fr_dataset`, or `--seed_dict`.
 
 ---
 
