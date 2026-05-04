@@ -88,17 +88,29 @@ babylm/
     haitian_creole/           -- HC oracle vocabulary
     final/                    -- assembled training corpus
   scripts/
-    setup.sh                  -- environment setup
+    setup.sh                  -- local environment setup
+    cloud_setup.sh            -- remote (Vast.ai) environment setup
+    deploy_to_vast.sh         -- ship corpus + train.py to a Vast.ai box
+    sync_checkpoints.sh       -- pull checkpoints back from a remote box
+    run_multi_seed.sh         -- launch N seeds in parallel across N GPUs
     download_babylm_corpus.py -- fetch official corpus
     download_childes_french.py-- fetch CHILDES French CDS
     build_creole_oracle.py    -- build HC vocabulary oracle
+    build_bilingual_lemmas.py -- build the FR/HC cognate map
+    analyze_caillou_oracle.py -- inspect HC oracle coverage on Caillou subset
+    build_french_corpus.py    -- assemble the final 100M-word corpus
     count_words.py            -- BabyLM word budget tracker
-    build_french_corpus.py    -- assemble final corpus (TODO)
-    train.py                  -- training script (TODO)
+    build_tokenizer.py        -- pre-train the shared 50k BPE tokenizer
+    train.py                  -- training script (single seed)
+    aggregate_seeds.py        -- compute mean +/- std across seed eval JSONs
+    _checkpoint_schedule.py   -- shared CHECKPOINT_WORDS + ckpt-index helper
   eval/
-    evaluation-pipeline/      -- cloned BabyLM eval repo
-  models/                     -- trained checkpoints
+    evaluation-pipeline/      -- cloned BabyLM eval repo (clone after April 2026 release)
+  models/
+    tokenizer/                -- shared BPE tokenizer (one for all seeds)
+    seed{S}/chck_*M/          -- per-seed HuggingFace checkpoints
   paper/                      -- LaTeX source
+  tests/                      -- pytest suite covering pure helpers
 ```
 
 ---
@@ -112,6 +124,30 @@ direct comparability):
 - Joint 50k BPE tokenizer (French only for this project)
 
 This matches the architecture in MASTER_PLAN.md and fractal-language/CLAUDE.md.
+
+---
+
+## Multi-seed Training
+
+The submitted leaderboard checkpoint was trained with a single (unrecorded)
+seed. For the paper we report mean +/- std across 5 seeds. Workflow:
+
+1. `python scripts/build_tokenizer.py` once to materialise the shared BPE
+   tokenizer at `models/tokenizer/`. All seeds reuse it; this avoids both a
+   race on `tokenizer.json` between parallel seeds and an extra source of
+   variance.
+2. Export `WANDB_API_KEY` and `wandb login`. Training metrics
+   (loss, ppl, lr, tokens/sec, words processed, checkpoint events) stream to
+   the `babylm-2026` wandb project under run name `seed{S}`.
+3. `bash scripts/run_multi_seed.sh 1 2 3 4 5` on a multi-GPU host.
+   `nvidia-smi -L | wc -l` auto-detects N; the script launches in waves of N
+   seeds, one per GPU via `CUDA_VISIBLE_DEVICES`. Per-seed logs go to
+   `logs/seed{S}.log`, checkpoints to `models/seed{S}/chck_*M/`.
+4. After eval, `python scripts/aggregate_seeds.py 'eval_results/seed*.json'`
+   prints a markdown (and optional `--latex`) table with mean, std, n,
+   min, max for every metric.
+
+`--wandb_mode disabled` short-circuits wandb entirely (offline / no key).
 
 ---
 

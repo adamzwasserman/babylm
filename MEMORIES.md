@@ -87,31 +87,45 @@ French:  "La langue de Molière, quatre cents ans plus tard : toujours redoutabl
 - MASTER_PLAN.md written
 - CLAUDE.md and MEMORIES.md written
 - Directory structure created
-- requirements.txt written
+- requirements.txt + pyproject.toml written
 - .gitignore written
-- All initial scripts written:
+- Initial data pipeline scripts:
   - scripts/setup.sh
   - scripts/download_babylm_corpus.py
   - scripts/download_childes_french.py
   - scripts/build_creole_oracle.py
-  - scripts/count_words.py
+  - scripts/build_bilingual_lemmas.py
+  - scripts/analyze_caillou_oracle.py
   - scripts/build_french_corpus.py  <-- CRITICAL: assembles final corpus
+  - scripts/count_words.py
+- Training pipeline:
+  - scripts/build_tokenizer.py     <-- pre-trains shared BPE tokenizer
+  - scripts/train.py               <-- single-seed training (wandb-aware)
+  - scripts/_checkpoint_schedule.py
+  - scripts/run_multi_seed.sh      <-- N-GPU parallel seeds
+  - scripts/aggregate_seeds.py     <-- mean +/- std across seeds
+- Cloud / remote helpers:
+  - scripts/cloud_setup.sh
+  - scripts/deploy_to_vast.sh
+  - scripts/sync_checkpoints.sh
+- Tests under tests/ (pytest, lint via ruff). Pure helpers covered without
+  requiring the GPU stack.
+- Submitted leaderboard checkpoint chck_92M_epoch3 trained (single seed,
+  pre-seeding fix; not bit-reproducible from current train.py)
 - paper/prior_work/README.md written (points to fractal-language)
 
 ### Not Yet Done
-- setup.sh not yet executed (run this first)
-- No corpus downloaded yet
-- Eval pipeline not yet cloned
-- train.py not yet written
-- No model trained yet
+- 5-seed run on a 3xRTX-4000-Ada server (waves of 3 then 2)
+- Aggregated paper table from per-seed eval JSONs
+- Eval pipeline not yet cloned (waiting on April 2026 release)
 
 ### Next Immediate Actions
-1. Run: cd /Users/adam/dev/babylm && bash scripts/setup.sh
-2. Run: python scripts/download_childes_french.py
-3. Run: python scripts/build_creole_oracle.py
-4. Run: python scripts/build_french_corpus.py  (will auto-download CC-100 if needed)
-5. Run: python scripts/count_words.py corpus/final/train_french.txt
-6. Wait for BabyLM eval pipeline (early April 2026) then clone it
+1. On the 3-GPU server: `bash scripts/cloud_setup.sh` (or local venv install)
+2. `export WANDB_API_KEY=...` and `wandb login`
+3. `bash scripts/run_multi_seed.sh 1 2 3 4 5`  (waves of 3 across GPU 0/1/2)
+4. Clone BabyLM eval pipeline once released
+5. Run eval against each `models/seed{S}/chck_*M/` checkpoint
+6. `python scripts/aggregate_seeds.py 'eval_results/seed*.json' --latex`
 
 ---
 
@@ -156,6 +170,24 @@ Use scripts/count_words.py to track budget at every step.
 - Locked title and anti-hegemony framing
 - Created directory structure and initial scripts
 - Wrote CLAUDE.md and MEMORIES.md
+
+### Session 2 (2026-05-04, branch feature/multi-seed-wandb)
+- Added multi-seed training infrastructure on top of audit/lint-and-tests:
+  - train.py: per-seed output_dir, --tokenizer_dir decoupled,
+    wandb logging (loss/ppl/lr/tokens-per-sec/words/checkpoint events),
+    try/finally around the loop so wandb.finish() runs on crashes
+  - extracted compute_next_ckpt_idx + CHECKPOINT_WORDS to
+    scripts/_checkpoint_schedule.py so the regression test runs without torch
+  - scripts/build_tokenizer.py: one-shot tokenizer pre-train to avoid
+    parallel-seed races on tokenizer.json
+  - scripts/run_multi_seed.sh: waves of N seeds (auto-detected from
+    nvidia-smi -L) with CUDA_VISIBLE_DEVICES, EXIT/INT/TERM trap to kill
+    children, fail-fast on N_GPUS=0
+  - scripts/aggregate_seeds.py: mean +/- std across per-seed eval JSONs
+    (markdown + optional LaTeX), UTF-8 safe
+- Audit-fix on the new code: 5 root-cause bugs fixed and 23 new tests added
+  (51 pass + 1 skip when torch missing locally)
+- CLAUDE.md and MEMORIES.md aligned to current code state
 
 ---
 
