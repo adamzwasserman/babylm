@@ -50,7 +50,7 @@ def _drill(obj: Any, dot_path: str) -> Any:
 
 
 def load_seed(path: str, dot_key: str) -> dict[str, float]:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
     if dot_key:
         data = _drill(data, dot_key)
@@ -70,13 +70,15 @@ def expand_paths(patterns: list[str]) -> list[str]:
 
 def build_summary(rows: list[dict[str, float]], names: list[str]) -> pd.DataFrame:
     df = pd.DataFrame(rows, index=names)
-    summary = pd.DataFrame({
-        "mean": df.mean(),
-        "std": df.std(ddof=1),
-        "n": df.count().astype(int),
-        "min": df.min(),
-        "max": df.max(),
-    })
+    summary = pd.DataFrame(
+        {
+            "mean": df.mean(),
+            "std": df.std(ddof=1),
+            "n": df.count().astype(int),
+            "min": df.min(),
+            "max": df.max(),
+        }
+    )
     return summary.sort_index()
 
 

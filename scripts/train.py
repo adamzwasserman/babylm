@@ -25,6 +25,7 @@ import time
 
 import numpy as np
 import torch
+from _checkpoint_schedule import CHECKPOINT_WORDS, compute_next_ckpt_idx
 from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
 from torch.utils.data import DataLoader, Dataset
 from transformers import (
@@ -63,11 +64,8 @@ TOKENIZER_DIR = os.path.join(MODELS_DIR, "tokenizer")
 # BabyLM word budget
 STRICT_BUDGET = 100_000_000
 
-# Checkpoint schedule: save at these word counts
-CHECKPOINT_WORDS = (
-    [i * 1_000_000 for i in range(1, 11)]  # 1M..10M
-    + [i * 10_000_000 for i in range(2, 11)]  # 20M..100M
-)
+# CHECKPOINT_WORDS is imported from _checkpoint_schedule to keep the schedule
+# (and the compute_next_ckpt_idx helper) testable without torch installed.
 
 
 def parse_args():
@@ -238,7 +236,7 @@ def estimate_words_per_token(corpus_path, tokenizer, sample_lines=10000):
     return ratio
 
 
-def init_wandb(args, total_steps, n_params):
+def init_wandb(args: argparse.Namespace, total_steps: int, n_params: int):
     """Initialize wandb if available and not disabled. Returns the run or None."""
     if args.wandb_mode == "disabled":
         return None
@@ -329,13 +327,49 @@ def train(args):
 
     n_params = sum(p.numel() for p in model.parameters())
     wandb_run = init_wandb(args, total_steps, n_params)
+    try:
+        _run_training_loop(
+            args=args,
+            model=model,
+            optimizer=optimizer,
+            scaler=scaler,
+            use_amp=use_amp,
+            dataloader=dataloader,
+            tokenizer=tokenizer,
+            device=device,
+            words_processed=words_processed,
+            words_per_token=words_per_token,
+            tokens_per_batch=tokens_per_batch,
+            total_steps=total_steps,
+            wandb_run=wandb_run,
+        )
+    finally:
+        if wandb_run is not None:
+            wandb_run.finish()
 
-    # Figure out which checkpoints we still need
-    next_ckpt_idx = 0
-    for i, w in enumerate(CHECKPOINT_WORDS):
-        if w > words_processed:
-            next_ckpt_idx = i
-            break
+
+def _run_training_loop(
+    *,
+    args: argparse.Namespace,
+    model,
+    optimizer,
+    scaler,
+    use_amp: bool,
+    dataloader,
+    tokenizer,
+    device,
+    words_processed: int,
+    words_per_token: float,
+    tokens_per_batch: int,
+    total_steps: int,
+    wandb_run,
+) -> None:
+    """Run the actual training epochs and checkpointing loop.
+
+    Extracted from train() so that train() can wrap the loop in a try/finally
+    that calls wandb_run.finish() even when training crashes mid-epoch.
+    """
+    next_ckpt_idx = compute_next_ckpt_idx(words_processed, CHECKPOINT_WORDS)
 
     # Training loop
     model.train()
@@ -414,8 +448,6 @@ def train(args):
     save_checkpoint(model, tokenizer, words_processed, args.output_dir)
     print(f"\nTraining complete. {words_processed/1e6:.1f}M words processed.")
     print(f"Total time: {(time.time() - t0)/3600:.1f}h")
-    if wandb_run is not None:
-        wandb_run.finish()
     print(f"\nTo evaluate: ./eval_zero_shot.sh {args.output_dir}/chck_<N>M causal")
 
 

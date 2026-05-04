@@ -25,7 +25,18 @@
 #   TRAIN_EXTRA    extra flags appended to every train.py call
 #                  (e.g. TRAIN_EXTRA="--epochs 2 --batch_size 16")
 
-set -e
+set -eo pipefail
+
+# Kill any background training children if we get interrupted or fail.
+cleanup() {
+    pids=$(jobs -p)
+    if [ -n "$pids" ]; then
+        echo "Cleaning up background processes: $pids" >&2
+        # shellcheck disable=SC2086
+        kill $pids 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT INT TERM
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -47,6 +58,15 @@ if [ -z "$N_GPUS" ]; then
     else
         N_GPUS=1
     fi
+fi
+
+# nvidia-smi -L can return 0 when no GPUs are visible; treat that as fatal
+# rather than entering an inner for-loop that launches nothing and looping
+# the outer while forever.
+if ! [[ "$N_GPUS" =~ ^[0-9]+$ ]] || [ "$N_GPUS" -lt 1 ]; then
+    echo "ERROR: N_GPUS must be a positive integer (got: '$N_GPUS')." >&2
+    echo "       nvidia-smi may have failed or no GPUs are visible." >&2
+    exit 2
 fi
 
 echo "================================================"
