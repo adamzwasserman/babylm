@@ -85,7 +85,22 @@ def parse_args():
     p.add_argument("--device", default="auto")
     p.add_argument("--seed", type=int, default=42,
                     help="Random seed for Python, NumPy, and PyTorch")
-    return p.parse_args()
+    p.add_argument("--output_dir", default=None,
+                    help="Where to save checkpoints (default: models/seed{SEED}/)")
+    p.add_argument("--tokenizer_dir", default=TOKENIZER_DIR,
+                    help="Pre-trained tokenizer dir, shared across seeds")
+    p.add_argument("--wandb_project", default="babylm-2026")
+    p.add_argument("--wandb_entity", default=None)
+    p.add_argument("--wandb_mode", default="online",
+                    choices=["online", "offline", "disabled"])
+    p.add_argument("--wandb_run_name", default=None,
+                    help="Defaults to seed{SEED}")
+    args = p.parse_args()
+    if args.output_dir is None:
+        args.output_dir = os.path.join(MODELS_DIR, f"seed{args.seed}")
+    if args.wandb_run_name is None:
+        args.wandb_run_name = f"seed{args.seed}"
+    return args
 
 
 def get_device(device_arg):
@@ -223,15 +238,46 @@ def estimate_words_per_token(corpus_path, tokenizer, sample_lines=10000):
     return ratio
 
 
+def init_wandb(args, total_steps, n_params):
+    """Initialize wandb if available and not disabled. Returns the run or None."""
+    if args.wandb_mode == "disabled":
+        return None
+    try:
+        import wandb
+    except ImportError:
+        print("wandb not installed; skipping logging")
+        return None
+    run = wandb.init(
+        project=args.wandb_project,
+        entity=args.wandb_entity,
+        mode=args.wandb_mode,
+        name=args.wandb_run_name,
+        config={
+            "seed": args.seed,
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "seq_len": args.seq_len,
+            "lr": args.lr,
+            "warmup_steps": args.warmup_steps,
+            "vocab_size": args.vocab_size,
+            "total_steps": total_steps,
+            "n_params": n_params,
+            "output_dir": args.output_dir,
+            "corpus": args.corpus,
+        },
+    )
+    return run
+
+
 def train(args):
     set_seed(args.seed)
     device = get_device(args.device)
-    print(f"Device: {device} | seed: {args.seed}")
+    print(f"Device: {device} | seed: {args.seed} | output_dir: {args.output_dir}")
 
-    os.makedirs(MODELS_DIR, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
 
-    # Tokenizer
-    tokenizer = train_tokenizer(args.corpus, args.vocab_size, TOKENIZER_DIR)
+    # Tokenizer (shared across seeds; pre-train with scripts/build_tokenizer.py)
+    tokenizer = train_tokenizer(args.corpus, args.vocab_size, args.tokenizer_dir)
 
     # Dataset
     dataset = TextDataset(args.corpus, tokenizer, args.seq_len)
@@ -280,6 +326,9 @@ def train(args):
     print(f"\nTraining: {args.epochs} epoch(s), {len(dataloader)} steps/epoch, "
           f"{total_steps} total steps")
     print(f"Checkpoint schedule: {[f'{w//1e6:.0f}M' for w in CHECKPOINT_WORDS]}")
+
+    n_params = sum(p.numel() for p in model.parameters())
+    wandb_run = init_wandb(args, total_steps, n_params)
 
     # Figure out which checkpoints we still need
     next_ckpt_idx = 0
@@ -340,19 +389,34 @@ def train(args):
                 print(f"  step {global_step:>6} | loss {avg_loss:.4f} | ppl {ppl:.1f} | "
                       f"lr {lr:.2e} | {tokens_per_sec:.0f} tok/s | "
                       f"{words_processed/1e6:.1f}M words")
+                if wandb_run is not None:
+                    wandb_run.log({
+                        "train/loss": avg_loss,
+                        "train/ppl": ppl,
+                        "train/lr": lr,
+                        "train/tokens_per_sec": tokens_per_sec,
+                        "train/words_processed": words_processed,
+                        "train/epoch": epoch + 1,
+                    }, step=global_step)
                 running_loss = 0.0
 
             # Checkpoint
             while (next_ckpt_idx < len(CHECKPOINT_WORDS)
                    and words_processed >= CHECKPOINT_WORDS[next_ckpt_idx]):
-                save_checkpoint(model, tokenizer, words_processed, MODELS_DIR)
+                save_checkpoint(model, tokenizer, words_processed, args.output_dir)
+                if wandb_run is not None:
+                    wandb_run.log({
+                        "checkpoint/words_processed": words_processed,
+                    }, step=global_step)
                 next_ckpt_idx += 1
 
     # Final save
-    save_checkpoint(model, tokenizer, words_processed, MODELS_DIR)
+    save_checkpoint(model, tokenizer, words_processed, args.output_dir)
     print(f"\nTraining complete. {words_processed/1e6:.1f}M words processed.")
     print(f"Total time: {(time.time() - t0)/3600:.1f}h")
-    print("\nTo evaluate: ./eval_zero_shot.sh models/chck_95M causal")
+    if wandb_run is not None:
+        wandb_run.finish()
+    print(f"\nTo evaluate: ./eval_zero_shot.sh {args.output_dir}/chck_<N>M causal")
 
 
 if __name__ == "__main__":
