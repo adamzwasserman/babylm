@@ -66,9 +66,45 @@ else
     SEEDS=(42 43 44 45 46)
 fi
 
-CKPT_NAME="${CKPT_NAME:-chck_92M}"
+# If CKPT_NAME is unset, we auto-detect per seed: pick the highest-numbered
+# chck_NM/ directory under models/seed{S}/. This makes the orchestrator work
+# whether the training ran 1, 3, or 5 epochs (different word counts -> the
+# final checkpoint name varies).
+CKPT_NAME="${CKPT_NAME:-}"
 LOG_DIR="logs/paper_part1"
 mkdir -p "$LOG_DIR" eval_results
+
+# Resolve the checkpoint path for one seed. Honors $CKPT_NAME if set,
+# otherwise picks the chck_NM/ with the largest N inside models/seed{S}/.
+resolve_ckpt() {
+    local seed=$1
+    local seed_dir="models/seed${seed}"
+    if [ -n "$CKPT_NAME" ]; then
+        echo "${seed_dir}/${CKPT_NAME}"
+        return
+    fi
+    local best=""
+    local best_n=-1
+    for d in "${seed_dir}"/chck_*M; do
+        [ -d "$d" ] || continue
+        local base
+        base=$(basename "$d")
+        # base looks like chck_92M; extract the integer between chck_ and M
+        local n=${base#chck_}
+        n=${n%M}
+        if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$best_n" ]; then
+            best_n=$n
+            best=$d
+        fi
+    done
+    if [ -z "$best" ]; then
+        # Fall back to a stable default so the error message in the eval
+        # script is informative ("checkpoint not found: models/seed42/chck_92M")
+        echo "${seed_dir}/chck_92M"
+    else
+        echo "$best"
+    fi
+}
 
 skip_phase() {
     local phase=$1
@@ -121,7 +157,11 @@ if ! skip_phase 0; then
         echo "WARN: no wandb credentials found in ~/.netrc."
         echo "      Run 'wandb login' once, or pass TRAIN_EXTRA=\"--wandb_mode disabled\"."
     fi
-    echo "Pre-flight OK. Seeds: ${SEEDS[*]}, ckpt name: $CKPT_NAME"
+    if [ -n "$CKPT_NAME" ]; then
+        echo "Pre-flight OK. Seeds: ${SEEDS[*]}, fixed ckpt name: $CKPT_NAME"
+    else
+        echo "Pre-flight OK. Seeds: ${SEEDS[*]}, auto-detect highest chck_NM/ per seed"
+    fi
 fi
 
 # -------- Phase 1: training (5 seeded checkpoints) --------------------------
@@ -130,9 +170,13 @@ if ! skip_phase 1; then
     phase_header 1 "Training (parallel by N_GPUS waves)"
     need_train=()
     for s in "${SEEDS[@]}"; do
-        ckpt="models/seed${s}/${CKPT_NAME}"
-        if skipped "$ckpt"; then
-            echo "  seed=$s -> $ckpt already exists, skipping"
+        # Consider a seed already trained if there is at least one chck_*M
+        # directory under models/seed{S}/. If you want to force a re-run
+        # with more epochs, set FORCE=1 or delete the seed dir.
+        if [ -z "${FORCE:-}" ] && \
+           ls -d "models/seed${s}"/chck_*M >/dev/null 2>&1; then
+            existing=$(resolve_ckpt "$s")
+            echo "  seed=$s -> $existing already exists, skipping"
         else
             need_train+=("$s")
         fi
@@ -156,7 +200,7 @@ eval_seed() {
     "$@" 2>&1 | tee "$log"
 }
 
-CKPT_PATH() { echo "models/seed${1}/${CKPT_NAME}"; }
+CKPT_PATH() { resolve_ckpt "$1"; }
 
 # -------- Phase 2: QFrBLiMP --------------------------------------------------
 
