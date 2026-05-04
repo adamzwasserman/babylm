@@ -37,6 +37,10 @@
 
 set -euo pipefail
 
+# Stream Python stdout/stderr live (no buffering) so progress prints and
+# tqdm bars appear in real time when piped through tee.
+export PYTHONUNBUFFERED=1
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
@@ -105,8 +109,8 @@ if ! skip_phase 1; then
         echo "  corpus/babylm_official/corpus_summary.json exists, skipping"
     else
         log="$LOG_DIR/phase1_babylm.log"
-        echo "  log: $log"
-        python scripts/download_babylm_corpus.py > "$log" 2>&1
+        echo "  log: $log (live output below)"
+        python scripts/download_babylm_corpus.py 2>&1 | tee "$log"
         echo "  done"
     fi
 fi
@@ -123,8 +127,8 @@ if ! skip_phase 2; then
     else
         require_childes_creds
         log="$LOG_DIR/phase2_childes.log"
-        echo "  log: $log"
-        python scripts/download_childes_french.py > "$log" 2>&1
+        echo "  log: $log (live output below)"
+        python scripts/download_childes_french.py 2>&1 | tee "$log"
         echo "  done"
     fi
 fi
@@ -137,8 +141,8 @@ if ! skip_phase 3; then
         echo "  corpus/haitian_creole/oracle_french_lemmas.txt exists, skipping"
     else
         log="$LOG_DIR/phase3_oracle.log"
-        echo "  log: $log"
-        python scripts/build_creole_oracle.py > "$log" 2>&1
+        echo "  log: $log (live output below)"
+        python scripts/build_creole_oracle.py 2>&1 | tee "$log"
         echo "  done"
     fi
 fi
@@ -151,8 +155,8 @@ if ! skip_phase 4; then
         echo "  corpus/bilingual/bilingual_lemmas.txt exists, skipping"
     else
         log="$LOG_DIR/phase4_bilingual.log"
-        echo "  log: $log"
-        python scripts/build_bilingual_lemmas.py > "$log" 2>&1
+        echo "  log: $log (live output below)"
+        python scripts/build_bilingual_lemmas.py 2>&1 | tee "$log"
         echo "  done"
     fi
 fi

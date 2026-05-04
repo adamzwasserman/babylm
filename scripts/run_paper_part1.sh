@@ -33,6 +33,10 @@
 
 set -euo pipefail
 
+# Stream Python stdout/stderr live (no buffering) so progress prints and
+# tqdm bars appear in real time when piped through tee.
+export PYTHONUNBUFFERED=1
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_DIR"
@@ -139,7 +143,7 @@ eval_seed() {
     fi
     local log="$LOG_DIR/phase${phase}_seed${seed}.log"
     echo "  [phase $phase] seed=$seed: $desc -> $expected (log: $log)"
-    "$@" > "$log" 2>&1
+    "$@" 2>&1 | tee "$log"
 }
 
 CKPT_PATH() { echo "models/seed${1}/${CKPT_NAME}"; }
@@ -192,12 +196,12 @@ if ! skip_phase 6; then
         # Each (lever, task) cell writes its own JSON; the script skips B
         # internally (placebo, handled in §5.2).
         log="$LOG_DIR/phase6_seed${s}.log"
-        echo "  [phase 6] seed=$s: full grid (log: $log)"
-        python scripts/run_xling_glue.py "$(CKPT_PATH "$s")" --seed "$s" \
-            --all_levers --all_tasks > "$log" 2>&1 || {
-                echo "  [phase 6] seed=$s FAILED, see $log" >&2
-                exit 1
-            }
+        echo "  [phase 6] seed=$s: full grid (log: $log, live output below)"
+        if ! python scripts/run_xling_glue.py "$(CKPT_PATH "$s")" --seed "$s" \
+                --all_levers --all_tasks 2>&1 | tee "$log"; then
+            echo "  [phase 6] seed=$s FAILED, see $log" >&2
+            exit 1
+        fi
     done
 fi
 
