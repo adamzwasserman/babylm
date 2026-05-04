@@ -9,6 +9,7 @@ requests
 tqdm
 numpy
 pandas
+pymysql>=1.1.2
 wandb>=0.18
 peft>=0.13
 evaluate>=0.4
