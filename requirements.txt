@@ -9,3 +9,4 @@ requests
 tqdm
 numpy
 pandas
+wandb>=0.18

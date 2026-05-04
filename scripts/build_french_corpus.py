@@ -16,11 +16,11 @@ contributes text to the training corpus.
 """
 
 import argparse
-import os
 import json
+import os
 import random
 import re
-from collections import Counter
+
 from tqdm import tqdm
 
 CORPUS_DIR = os.path.join(os.path.dirname(__file__), "..", "corpus")
@@ -48,11 +48,19 @@ def load_oracle_lemmas():
         print(f"WARNING: Oracle not found at {oracle_path}")
         print("Run scripts/build_creole_oracle.py first.")
         return set()
-    
+
     with open(oracle_path, encoding="utf-8") as f:
         lemmas = {line.strip().lower() for line in f if line.strip()}
     print(f"Loaded {len(lemmas)} oracle lemmas")
     return lemmas
+
+# Lowercase French letter class used to strip punctuation before oracle
+# lookup. Includes the ligatures (œ, æ) and diaeresis-y (ÿ) that appear
+# in core vocabulary like "cœur", "œuvre", "sœur", "œuf" — without these
+# the regex would map "cœur" to "cur" and miss any oracle entry for it.
+_FR_LOWER_LETTERS = r"a-zàâäéèêëîïôùûüçœæÿ"
+_FR_LETTERS_RE = re.compile(rf"[^{_FR_LOWER_LETTERS}]")
+
 
 def oracle_density(sentence, oracle_lemmas):
     """
@@ -64,7 +72,7 @@ def oracle_density(sentence, oracle_lemmas):
     words = sentence.lower().split()
     if not words:
         return 0.0
-    hits = sum(1 for w in words if re.sub(r"[^a-zàâäéèêëîïôùûüç]", "", w) in oracle_lemmas)
+    hits = sum(1 for w in words if _FR_LETTERS_RE.sub("", w) in oracle_lemmas)
     return hits / len(words)
 
 def load_childes_sentences():
@@ -74,7 +82,7 @@ def load_childes_sentences():
         print(f"WARNING: CHILDES directory not found: {CHILDES_DIR}")
         print("Run scripts/download_childes_french.py first.")
         return sentences
-    
+
     for fname in os.listdir(CHILDES_DIR):
         if fname.endswith(".txt"):
             path = os.path.join(CHILDES_DIR, fname)
@@ -83,7 +91,7 @@ def load_childes_sentences():
                     line = line.strip()
                     if line and len(line.split()) >= 3:  # min 3 words
                         sentences.append(line)
-    
+
     print(f"Loaded {len(sentences):,} sentences from CHILDES French")
     return sentences
 
@@ -245,45 +253,45 @@ def build_weighted_corpus(all_sentences, oracle_lemmas, target_words):
     High oracle-density sentences are oversampled.
     """
     print(f"\nScoring {len(all_sentences):,} sentences by oracle density...")
-    
+
     scored = []
     for sent in tqdm(all_sentences, desc="Scoring"):
         density = oracle_density(sent, oracle_lemmas)
         weight = 1.0 + (OVERSAMPLE_WEIGHT - 1.0) * density
         scored.append((sent, weight))
-    
+
     # Separate high and normal density
     high_density = [(s, w) for s, w in scored if w > 1.5]
     normal = [(s, w) for s, w in scored if w <= 1.5]
-    
+
     print(f"High oracle-density sentences: {len(high_density):,}")
     print(f"Normal sentences: {len(normal):,}")
-    
+
     # Build corpus by weighted sampling
     final_sentences = []
     current_words = 0
-    
+
     # First pass: include all sentences with weights
     pool = scored.copy()
     random.shuffle(pool)
-    
+
     for sent, weight in tqdm(pool, desc="Building corpus"):
         word_count = len(sent.split())
         if current_words + word_count > target_words:
             break
-        
+
         # Add sentence weight times (oversampling)
         repeats = max(1, round(weight))
         for _ in range(repeats):
             if current_words + word_count <= target_words:
                 final_sentences.append(sent)
                 current_words += word_count
-    
+
     # If we're short, add more from pool
     if current_words < target_words * 0.9:
         print(f"Only {current_words/1_000_000:.1f}M words. Need more data.")
         print("Consider downloading more French text sources.")
-    
+
     random.shuffle(final_sentences)
     return final_sentences, current_words
 
@@ -439,11 +447,11 @@ def main():
         print("\n--- Saving corpus ---")
         save_corpus(final_sentences, final_words, harness=harness)
 
-    print(f"\n=== Done ===")
+    print("\n=== Done ===")
     for h in harnesses:
         suffix = "" if h == "a" else f"_{h}"
         print(f"  Harness {h.upper()}: corpus/final/train_french{suffix}.txt")
-    print(f"Verify with: uv run python scripts/count_words.py corpus/final/train_french.txt")
+    print("Verify with: uv run python scripts/count_words.py corpus/final/train_french.txt")
 
 
 if __name__ == "__main__":
