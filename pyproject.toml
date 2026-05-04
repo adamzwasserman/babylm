@@ -17,6 +17,10 @@ dependencies = [
     "pandas",
     "pymysql>=1.1.2",
     "wandb>=0.18",
+    "peft>=0.13",
+    "evaluate>=0.4",
+    "scikit-learn>=1.5",
+    "accelerate>=0.34",
 ]
 
 [project.optional-dependencies]

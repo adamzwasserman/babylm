@@ -131,7 +131,7 @@ was about the framing, not the experiment.
 
 ### Next Immediate Actions
 1. On the 3-GPU server: `bash scripts/cloud_setup.sh` (or local venv install)
-2. `export WANDB_API_KEY=...` and `wandb login`
+2. `wandb login` once on this host (key lands in `~/.netrc`, no env var)
 3. `bash scripts/run_multi_seed.sh 1 2 3 4 5`  (waves of 3 across GPU 0/1/2)
 4. Clone BabyLM eval pipeline once released
 5. Run eval against each `models/seed{S}/chck_*M/` checkpoint
