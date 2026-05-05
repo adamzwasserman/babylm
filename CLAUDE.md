@@ -1,14 +1,16 @@
-# CLAUDE.md — Born Speaking French (BabyLM 2026)
+# CLAUDE.md — Right Tool, Right Job (BabyLM 2026)
 
 This file provides full context for Claude Code sessions in this repository.
 
 ## Project Identity
 
 **Paper title:**
-"Born Speaking French: Why the Crib Beats the Cluster When the Language is Right"
+"Right Tool, Right Job: Why Training Language Matters More Than Training Data"
 
 **French subtitle:**
-"La langue de Molière, quatre cents ans plus tard : toujours redoutable"
+"Les bons outils font les bons ouvriers"
+
+**Submitted model:** MÉTRON-FR (125M GPT-2, French-only, 92.5M words). The earlier project name was "Born Speaking French"; the manuscript was reframed during the writing phase, but the corpus and training pipeline below are unchanged.
 
 **Target venue:** BabyLM Workshop at EMNLP 2026, Budapest, Hungary (Oct 24-29)
 
@@ -86,19 +88,40 @@ babylm/
     childes_french/           -- child-directed speech from CHILDES
     babylm_official/          -- official BabyLM corpus (reference only)
     haitian_creole/           -- HC oracle vocabulary
+    bilingual/                -- FR->EN lemma bridge for Harness C
     final/                    -- assembled training corpus
   scripts/
-    setup.sh                  -- environment setup
+    setup.sh                  -- local environment setup
+    cloud_setup.sh            -- remote (Vast.ai) environment setup
+    deploy_to_vast.sh         -- ship corpus + train.py to a Vast.ai box
+    sync_checkpoints.sh       -- pull checkpoints back from a remote box
+    run_multi_seed.sh         -- launch N seeds in parallel across N GPUs
     download_babylm_corpus.py -- fetch official corpus
-    download_childes_french.py-- fetch CHILDES French CDS
-    build_creole_oracle.py    -- build HC vocabulary oracle
+    download_childes_french.py-- fetch CHILDES French CDS (env-var creds)
+    build_creole_oracle.py    -- build HC vocabulary oracle (top-300 lemmas)
+    build_bilingual_lemmas.py -- 73-lemma FR/EN bridge for Harness C
+    analyze_caillou_oracle.py -- Caillou-vs-HC convergence check
+    build_french_corpus.py    -- assemble the final 100M-word corpus, oracle-weighted
     count_words.py            -- BabyLM word budget tracker
-    build_french_corpus.py    -- assemble final corpus (TODO)
-    train.py                  -- training script (TODO)
+    build_tokenizer.py        -- pre-train the shared 50k BPE tokenizer
+    train.py                  -- 125M GPT-2 trainer (single seed)
+    aggregate_seeds.py        -- compute mean +/- std across seed eval JSONs (generic)
+    aggregate_paper_tables.py -- emit Tables 1-3 LaTeX + §4.1/§4.2 prose from per-seed JSONs
+    _checkpoint_schedule.py   -- shared CHECKPOINT_WORDS + ckpt-index helper
+    eval_babylm_suite.py      -- wrap the BabyLM 2025 pipeline (BLiMP, BLiMP-Sup, EWoK, GLUE)
+    run_bli_procrustes.py     -- §4.3 closed-form orthogonal Procrustes vs GPT-2 EN
+    run_xling_glue.py         -- §4.4 LoRA grid (5 levers x 5 tasks) for cross-lingual GLUE
+    run_paper_part1.sh        -- §4 master orchestrator: train 5 seeds + all evals + tables
   eval/
-    evaluation-pipeline/      -- cloned BabyLM eval repo
-  models/                     -- trained checkpoints
+    qfrblimp/run.py           -- §4.1 zero-shot QFrBLiMP harness with bucket aggregation
+    qfrcola/run.py            -- §4.1 QFrCoLA fine-tune + accuracy + MCC
+    evaluation-pipeline-2025/ -- cloned BabyLM 2025 pipeline (auto-cloned by eval_babylm_suite.py)
+  models/
+    tokenizer/                -- shared BPE tokenizer (one for all seeds)
+    seed{S}/chck_*M/          -- per-seed HuggingFace checkpoints
+  eval_results/               -- per-seed JSONs (one file per benchmark)
   paper/                      -- LaTeX source
+  tests/                      -- pytest suite covering pure helpers
 ```
 
 ---
@@ -112,6 +135,71 @@ direct comparability):
 - Joint 50k BPE tokenizer (French only for this project)
 
 This matches the architecture in MASTER_PLAN.md and fractal-language/CLAUDE.md.
+
+---
+
+## Reproducing §4 of the paper (5 seeds, headline results)
+
+One-time setup on the host: `wandb login` (stores the API key in `~/.netrc`,
+which `wandb.init()` picks up automatically). Then:
+
+```
+bash scripts/run_paper_part1.sh 42 43 44 45 46
+```
+
+To skip wandb entirely, prepend `TRAIN_EXTRA="--wandb_mode disabled"`.
+
+The orchestrator runs 7 phases (train 5 seeds, then QFrBLiMP, QFrCoLA, BabyLM
+suite, BLI Procrustes, cross-lingual GLUE, aggregate). Each phase skips
+itself if its expected output already exists, so a partial run is resumable.
+`PHASE=N` runs a single phase; `SKIP_PHASES="6"` skips one. Final output:
+`paper_tables.tex` and `paper_tables.md` (Tables 1-3 + §4.1/§4.2 prose).
+
+Per-script entry points (for ad-hoc runs):
+
+| Script | Section | Output |
+|---|---|---|
+| `eval/qfrblimp/run.py` | §4.1 Table 1 | `seed{S}_qfrblimp.json` |
+| `eval/qfrcola/run.py` | §4.1 prose | `seed{S}_qfrcola.json` |
+| `scripts/eval_babylm_suite.py` | §4.2 prose | `seed{S}_babylm.json` |
+| `scripts/run_bli_procrustes.py` | §4.3 Table 2 | `seed{S}_bli_<target>.json` |
+| `scripts/run_xling_glue.py` | §4.4 Table 3 | `seed{S}_xglue_<lever>_<task>.json` |
+| `scripts/aggregate_paper_tables.py` | tables out | `paper_tables.tex` + `.md` |
+
+External dataset assumptions (override via CLI flags if names differ):
+
+- `BaselineQuebec/QFrBLiMP` (1761 minimal pairs, paradigm field)
+- `BaselineQuebec/QFrCoLA` (acceptability judgments + ood split)
+- `BaselineQuebec/glue-fr` (translated GLUE for the D+C lever)
+- `BaselineQuebec/fr_en_seed_dict` (242 verb pairs for BLI)
+
+If your published HF names differ, point each harness at the right dataset
+via `--dataset`, `--fr_dataset`, or `--seed_dict`.
+
+---
+
+## Multi-seed Training
+
+The submitted leaderboard checkpoint was trained with a single (unrecorded)
+seed. For the paper we report mean +/- std across 5 seeds. Workflow:
+
+1. `python scripts/build_tokenizer.py` once to materialise the shared BPE
+   tokenizer at `models/tokenizer/`. All seeds reuse it; this avoids both a
+   race on `tokenizer.json` between parallel seeds and an extra source of
+   variance.
+2. Run `wandb login` once on this host. The key is stored in `~/.netrc` and
+   `wandb.init()` picks it up automatically; no env var to export. Training
+   metrics (loss, ppl, lr, tokens/sec, words processed, checkpoint events)
+   stream to the `babylm-2026` wandb project under run name `seed{S}`.
+3. `bash scripts/run_multi_seed.sh 1 2 3 4 5` on a multi-GPU host.
+   `nvidia-smi -L | wc -l` auto-detects N; the script launches in waves of N
+   seeds, one per GPU via `CUDA_VISIBLE_DEVICES`. Per-seed logs go to
+   `logs/seed{S}.log`, checkpoints to `models/seed{S}/chck_*M/`.
+4. After eval, `python scripts/aggregate_seeds.py 'eval_results/seed*.json'`
+   prints a markdown (and optional `--latex`) table with mean, std, n,
+   min, max for every metric.
+
+`--wandb_mode disabled` short-circuits wandb entirely (offline / no key).
 
 ---
 

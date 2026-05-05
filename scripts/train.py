@@ -20,16 +20,36 @@ import argparse
 import json
 import math
 import os
+import random
 import time
 
+import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
+from _checkpoint_schedule import CHECKPOINT_WORDS, compute_next_ckpt_idx
+from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
+from torch.utils.data import DataLoader, Dataset
 from transformers import (
     GPT2Config,
     GPT2LMHeadModel,
     PreTrainedTokenizerFast,
 )
-from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
+
+
+def set_seed(seed: int) -> None:
+    """Seed Python, NumPy, and PyTorch for reproducible training.
+
+    Note: the submitted checkpoint chck_92M_epoch3 was trained before
+    explicit seeding was added, so re-running this script with the
+    default seed will not produce a bit-identical checkpoint to the
+    one on the BabyLM leaderboard. The canonical model is the one
+    released on the HuggingFace Hub; this seed is for reproducibility
+    of future runs (ablations, replications, follow-up experiments).
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 # Paths: auto-detect local vs remote
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -44,11 +64,8 @@ TOKENIZER_DIR = os.path.join(MODELS_DIR, "tokenizer")
 # BabyLM word budget
 STRICT_BUDGET = 100_000_000
 
-# Checkpoint schedule: save at these word counts
-CHECKPOINT_WORDS = (
-    [i * 1_000_000 for i in range(1, 11)]  # 1M..10M
-    + [i * 10_000_000 for i in range(2, 11)]  # 20M..100M
-)
+# CHECKPOINT_WORDS is imported from _checkpoint_schedule to keep the schedule
+# (and the compute_next_ckpt_idx helper) testable without torch installed.
 
 
 def parse_args():
@@ -64,7 +81,24 @@ def parse_args():
     p.add_argument("--resume", default=None, help="Resume from checkpoint directory")
     p.add_argument("--vocab_size", type=int, default=50000)
     p.add_argument("--device", default="auto")
-    return p.parse_args()
+    p.add_argument("--seed", type=int, default=42,
+                    help="Random seed for Python, NumPy, and PyTorch")
+    p.add_argument("--output_dir", default=None,
+                    help="Where to save checkpoints (default: models/seed{SEED}/)")
+    p.add_argument("--tokenizer_dir", default=TOKENIZER_DIR,
+                    help="Pre-trained tokenizer dir, shared across seeds")
+    p.add_argument("--wandb_project", default="babylm-2026")
+    p.add_argument("--wandb_entity", default=None)
+    p.add_argument("--wandb_mode", default="online",
+                    choices=["online", "offline", "disabled"])
+    p.add_argument("--wandb_run_name", default=None,
+                    help="Defaults to seed{SEED}")
+    args = p.parse_args()
+    if args.output_dir is None:
+        args.output_dir = os.path.join(MODELS_DIR, f"seed{args.seed}")
+    if args.wandb_run_name is None:
+        args.wandb_run_name = f"seed{args.seed}"
+    return args
 
 
 def get_device(device_arg):
@@ -119,11 +153,11 @@ class TextDataset(Dataset):
         with open(corpus_path, encoding="utf-8") as f:
             text = f.read()
 
-        eos_id = tokenizer.eos_token_id
         all_ids = tokenizer.encode(text)
 
-        # Insert EOS between documents (approximate: treat double newlines as boundaries)
-        # For a single-file corpus, we just chunk continuously
+        # Naive contiguous chunking: no document boundaries, no EOS insertion.
+        # The corpus is shuffled at sentence level upstream
+        # (build_french_corpus.py), so within-chunk locality is already broken.
         n_chunks = len(all_ids) // seq_len
         self.chunks = []
         for i in range(n_chunks):
@@ -172,12 +206,11 @@ def get_lr(step, warmup_steps, max_lr, total_steps):
 
 def save_checkpoint(model, tokenizer, words_processed, models_dir):
     """Save model in HuggingFace format for eval pipeline compatibility."""
-    # Determine checkpoint name
+    # Both branches of the original if/else produced identical names; keep
+    # the single int-floor formatting that matches the existing chck_NM
+    # pattern on disk.
     millions = words_processed / 1_000_000
-    if millions < 10:
-        name = f"chck_{int(millions)}M"
-    else:
-        name = f"chck_{int(millions)}M"
+    name = f"chck_{int(millions)}M"
 
     save_dir = os.path.join(models_dir, name)
     model.save_pretrained(save_dir)
@@ -203,14 +236,46 @@ def estimate_words_per_token(corpus_path, tokenizer, sample_lines=10000):
     return ratio
 
 
+def init_wandb(args: argparse.Namespace, total_steps: int, n_params: int):
+    """Initialize wandb if available and not disabled. Returns the run or None."""
+    if args.wandb_mode == "disabled":
+        return None
+    try:
+        import wandb
+    except ImportError:
+        print("wandb not installed; skipping logging")
+        return None
+    run = wandb.init(
+        project=args.wandb_project,
+        entity=args.wandb_entity,
+        mode=args.wandb_mode,
+        name=args.wandb_run_name,
+        config={
+            "seed": args.seed,
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "seq_len": args.seq_len,
+            "lr": args.lr,
+            "warmup_steps": args.warmup_steps,
+            "vocab_size": args.vocab_size,
+            "total_steps": total_steps,
+            "n_params": n_params,
+            "output_dir": args.output_dir,
+            "corpus": args.corpus,
+        },
+    )
+    return run
+
+
 def train(args):
+    set_seed(args.seed)
     device = get_device(args.device)
-    print(f"Device: {device}")
+    print(f"Device: {device} | seed: {args.seed} | output_dir: {args.output_dir}")
 
-    os.makedirs(MODELS_DIR, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
 
-    # Tokenizer
-    tokenizer = train_tokenizer(args.corpus, args.vocab_size, TOKENIZER_DIR)
+    # Tokenizer (shared across seeds; pre-train with scripts/build_tokenizer.py)
+    tokenizer = train_tokenizer(args.corpus, args.vocab_size, args.tokenizer_dir)
 
     # Dataset
     dataset = TextDataset(args.corpus, tokenizer, args.seq_len)
@@ -260,12 +325,56 @@ def train(args):
           f"{total_steps} total steps")
     print(f"Checkpoint schedule: {[f'{w//1e6:.0f}M' for w in CHECKPOINT_WORDS]}")
 
-    # Figure out which checkpoints we still need
-    next_ckpt_idx = 0
-    for i, w in enumerate(CHECKPOINT_WORDS):
-        if w > words_processed:
-            next_ckpt_idx = i
-            break
+    n_params = sum(p.numel() for p in model.parameters())
+    wandb_run = init_wandb(args, total_steps, n_params)
+    try:
+        _run_training_loop(
+            args=args,
+            model=model,
+            optimizer=optimizer,
+            scaler=scaler,
+            use_amp=use_amp,
+            dataloader=dataloader,
+            tokenizer=tokenizer,
+            device=device,
+            words_processed=words_processed,
+            words_per_token=words_per_token,
+            tokens_per_batch=tokens_per_batch,
+            total_steps=total_steps,
+            wandb_run=wandb_run,
+        )
+    finally:
+        if wandb_run is not None:
+            wandb_run.finish()
+
+
+def _run_training_loop(
+    *,
+    args: argparse.Namespace,
+    model,
+    optimizer,
+    scaler,
+    use_amp: bool,
+    dataloader,
+    tokenizer,
+    device,
+    words_processed: int,
+    words_per_token: float,
+    tokens_per_batch: int,
+    total_steps: int,
+    wandb_run,
+) -> None:
+    """Run the actual training epochs and checkpointing loop.
+
+    Extracted from train() so that train() can wrap the loop in a try/finally
+    that calls wandb_run.finish() even when training crashes mid-epoch.
+    """
+    next_ckpt_idx = compute_next_ckpt_idx(words_processed, CHECKPOINT_WORDS)
+
+    # Words processed per epoch (constant across epochs); used for the
+    # paper's chck_NM_epoch{E} per-epoch checkpoint naming convention.
+    words_per_epoch = int(len(dataloader) * tokens_per_batch * words_per_token)
+    words_per_epoch_M = max(1, words_per_epoch // 1_000_000)
 
     # Training loop
     model.train()
@@ -277,7 +386,7 @@ def train(args):
     for epoch in range(args.epochs):
         print(f"\n=== Epoch {epoch + 1}/{args.epochs} ===")
 
-        for batch_idx, batch in enumerate(dataloader):
+        for batch in dataloader:
             global_step += 1
 
             input_ids = batch["input_ids"].to(device)
@@ -319,19 +428,54 @@ def train(args):
                 print(f"  step {global_step:>6} | loss {avg_loss:.4f} | ppl {ppl:.1f} | "
                       f"lr {lr:.2e} | {tokens_per_sec:.0f} tok/s | "
                       f"{words_processed/1e6:.1f}M words")
+                if wandb_run is not None:
+                    wandb_run.log({
+                        "train/loss": avg_loss,
+                        "train/ppl": ppl,
+                        "train/lr": lr,
+                        "train/tokens_per_sec": tokens_per_sec,
+                        "train/words_processed": words_processed,
+                        "train/epoch": epoch + 1,
+                    }, step=global_step)
                 running_loss = 0.0
 
             # Checkpoint
             while (next_ckpt_idx < len(CHECKPOINT_WORDS)
                    and words_processed >= CHECKPOINT_WORDS[next_ckpt_idx]):
-                save_checkpoint(model, tokenizer, words_processed, MODELS_DIR)
+                save_checkpoint(model, tokenizer, words_processed, args.output_dir)
+                if wandb_run is not None:
+                    wandb_run.log({
+                        "checkpoint/words_processed": words_processed,
+                    }, step=global_step)
                 next_ckpt_idx += 1
 
-    # Final save
-    save_checkpoint(model, tokenizer, words_processed, MODELS_DIR)
-    print(f"\nTraining complete. {words_processed/1e6:.1f}M words processed.")
+        # End-of-epoch checkpoint: the paper picks the grammatical-competence
+        # peak across epochs (chck_NM_epoch{E}), so we save one per epoch and
+        # let downstream eval pick the best.
+        epoch_dir = os.path.join(
+            args.output_dir, f"chck_{words_per_epoch_M}M_epoch{epoch + 1}",
+        )
+        model.save_pretrained(epoch_dir)
+        tokenizer.save_pretrained(epoch_dir)
+        with open(os.path.join(epoch_dir, "training_meta.json"), "w") as f:
+            json.dump({
+                "words_processed": words_processed,
+                "words_per_epoch": words_per_epoch,
+                "epoch": epoch + 1,
+                "checkpoint_name": os.path.basename(epoch_dir),
+            }, f, indent=2)
+        print(f"  Epoch {epoch + 1} checkpoint saved: {epoch_dir}")
+        if wandb_run is not None:
+            wandb_run.log({
+                "checkpoint/epoch": epoch + 1,
+                "checkpoint/epoch_words": words_per_epoch,
+            }, step=global_step)
+
+    print(f"\nTraining complete. {words_processed/1e6:.1f}M words processed,"
+          f" {args.epochs} epoch(s).")
     print(f"Total time: {(time.time() - t0)/3600:.1f}h")
-    print(f"\nTo evaluate: ./eval_zero_shot.sh models/chck_95M causal")
+    print(f"Per-epoch checkpoints: {args.output_dir}/chck_{words_per_epoch_M}M_epoch{{1..{args.epochs}}}/")
+    print("Run scripts/run_paper_part1.sh to eval and pick the best epoch per seed.")
 
 
 if __name__ == "__main__":

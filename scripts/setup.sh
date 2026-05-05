@@ -1,6 +1,6 @@
 #!/bin/bash
 # BabyLM 2026 Setup Script
-# Run from /Users/adam/dev/babylm/
+# Run from the repository root.
 
 set -e
 
@@ -32,13 +32,11 @@ python3 scripts/download_babylm_corpus.py
 echo ""
 echo "=== Cloning BabyLM Evaluation Pipeline ==="
 if [ ! -d "eval/evaluation-pipeline" ]; then
-    git clone https://github.com/babylm/evaluation-pipeline-2024 eval/evaluation-pipeline
-    echo "NOTE: Update to 2025 pipeline when released (early April 2026)"
+    git clone https://github.com/babylm/evaluation-pipeline-2025 eval/evaluation-pipeline
 else
     echo "Eval pipeline already cloned."
 fi
 
 echo ""
 echo "=== Setup Complete ==="
-echo "Next: run scripts/inspect_corpus.py to see what French data exists"
 echo "Next: run scripts/download_childes_french.py to get CDS data"

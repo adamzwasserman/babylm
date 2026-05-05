@@ -15,7 +15,6 @@ Usage:
 
 import json
 import os
-import re
 from collections import Counter
 
 import spacy
@@ -114,7 +113,7 @@ def extract_lemma_frequencies(texts, nlp, label=""):
 def compare_vocabularies(caillou_lemmas, oracle_french_lemmas, all_fra_lemmas=None):
     """Compare Caillou vocabulary against the HC oracle."""
     # Get top N Caillou lemmas
-    top_caillou = set(l for l, _ in caillou_lemmas.most_common(200))
+    top_caillou = {lemma for lemma, _ in caillou_lemmas.most_common(200)}
 
     # Oracle French lemmas
     oracle_set = oracle_french_lemmas
@@ -125,7 +124,7 @@ def compare_vocabularies(caillou_lemmas, oracle_french_lemmas, all_fra_lemmas=No
     oracle_only = oracle_set - top_caillou
 
     print(f"\n{'='*60}")
-    print(f"CAILLOU vs CREOLE ORACLE VOCABULARY COMPARISON")
+    print("CAILLOU vs CREOLE ORACLE VOCABULARY COMPARISON")
     print(f"{'='*60}")
     print(f"\nTop 200 Caillou lemmas: {len(top_caillou)}")
     print(f"Oracle French lemmas:   {len(oracle_set)}")
@@ -138,40 +137,40 @@ def compare_vocabularies(caillou_lemmas, oracle_french_lemmas, all_fra_lemmas=No
     print(f"\nJaccard similarity:     {jaccard:.3f}")
 
     # Show the overlapping lemmas with their Caillou frequency
-    print(f"\n--- Overlapping lemmas (sorted by Caillou frequency) ---")
-    overlap_with_freq = [(l, caillou_lemmas[l]) for l in overlap]
+    print("\n--- Overlapping lemmas (sorted by Caillou frequency) ---")
+    overlap_with_freq = [(lemma, caillou_lemmas[lemma]) for lemma in overlap]
     overlap_with_freq.sort(key=lambda x: -x[1])
     for lemma, freq in overlap_with_freq[:30]:
         print(f"  {lemma:20} freq={freq:>6}")
 
     # Show Caillou-only top lemmas (what kids hear that didn't survive pidginization)
-    print(f"\n--- Top Caillou lemmas NOT in oracle ---")
-    caillou_only_freq = [(l, caillou_lemmas[l]) for l in caillou_only]
+    print("\n--- Top Caillou lemmas NOT in oracle ---")
+    caillou_only_freq = [(lemma, caillou_lemmas[lemma]) for lemma in caillou_only]
     caillou_only_freq.sort(key=lambda x: -x[1])
     for lemma, freq in caillou_only_freq[:20]:
         print(f"  {lemma:20} freq={freq:>6}")
 
     # Show oracle lemmas NOT in Caillou top-200
-    print(f"\n--- Oracle lemmas NOT in Caillou top-200 ---")
+    print("\n--- Oracle lemmas NOT in Caillou top-200 ---")
     for lemma in sorted(oracle_only)[:20]:
         print(f"  {lemma}")
 
     # Now compare at different thresholds
-    print(f"\n--- Overlap at different Caillou thresholds ---")
+    print("\n--- Overlap at different Caillou thresholds ---")
     for n in [50, 100, 200, 500, 1000]:
-        top_n = set(l for l, _ in caillou_lemmas.most_common(n))
+        top_n = {lemma for lemma, _ in caillou_lemmas.most_common(n)}
         ov = top_n & oracle_set
         print(f"  Top {n:>4}: {len(ov):>3} overlap ({len(ov)/min(n, len(oracle_set))*100:.0f}%)")
 
     # If we have all-fra lemmas, compare density
     if all_fra_lemmas:
-        print(f"\n--- Oracle density comparison ---")
+        print("\n--- Oracle density comparison ---")
         total_caillou = sum(caillou_lemmas.values())
-        oracle_hits_caillou = sum(caillou_lemmas[l] for l in oracle_set if l in caillou_lemmas)
+        oracle_hits_caillou = sum(caillou_lemmas[lemma] for lemma in oracle_set if lemma in caillou_lemmas)
         density_caillou = oracle_hits_caillou / total_caillou if total_caillou else 0
 
         total_all = sum(all_fra_lemmas.values())
-        oracle_hits_all = sum(all_fra_lemmas[l] for l in oracle_set if l in all_fra_lemmas)
+        oracle_hits_all = sum(all_fra_lemmas[lemma] for lemma in oracle_set if lemma in all_fra_lemmas)
         density_all = oracle_hits_all / total_all if total_all else 0
 
         print(f"  Caillou oracle density:  {density_caillou:.3f} ({oracle_hits_caillou:,}/{total_caillou:,})")
