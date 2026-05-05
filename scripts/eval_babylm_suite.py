@@ -2,34 +2,43 @@
 
 The pipeline lives at https://github.com/babylm/evaluation-pipeline-2025 and
 covers BLiMP, BLiMP Supplement, EWoK, and GLUE for the BabyLM weighted
-leaderboard score. We clone it on first use and shell out to its provided
-entry points, then collect the per-task scores into a single JSON under
-eval_results/seed{S}_babylm.json.
+leaderboard score. Two upstream entry points cover everything we need:
 
-The 2025 pipeline is the one referenced by the paper (Charpentier and Samuel,
-2024); the 2026 pipeline (released April 2026) is API-compatible and can be
-substituted by changing PIPELINE_REPO_URL.
+    eval_zero_shot.sh <model> causal      # BLiMP, BLiMP-Sup, EWoK, etc.
+    eval_finetuning.sh <model> ... <seed> # GLUE tasks
+
+We clone the pipeline on first use, sanity-check that `evaluation_data/`
+(downloaded separately from https://osf.io/ryjfm/) is present, shell out to
+the two scripts, then harvest every `results.txt` / `best_temperature_report.txt`
+the pipeline writes under `results/<model_basename>/`. Each seed's output
+directory is renamed to `results/seed{S}/` so concurrent seeds don't collide.
 
 Usage:
-    uv run python scripts/eval_babylm_suite.py models/seed42/chck_92M
-    uv run python scripts/eval_babylm_suite.py models/seed42/chck_92M --seed 42
+    uv run python scripts/eval_babylm_suite.py models/seed42/best --seed 42
 
 Output:
     eval_results/seed{S}_babylm.json with the structure:
     {
-        "checkpoint": "...",
-        "seed": 42,
-        "blimp": {"average": 0.7628, "per_task": {...}},
-        "blimp_supplement": {"average": 0.34, "per_task": {...}},
-        "ewok": {"average": 0.50, "per_task": {...}},
-        "glue": {"average": 0.6565, "per_task": {...}}
+      "checkpoint": "...",
+      "seed": 42,
+      "tasks": {
+        "zero_shot/causal/blimp/blimp_filtered": {"accuracy": 0.7628, ...},
+        "finetune/boolq": {"accuracy": ..., "f1": ..., "mcc": ...},
+        ...
+      }
     }
+
+Pre-requisites on the host:
+    - The pipeline's requirements installed (it lists requirements.txt at root).
+    - evaluation_data/ present at the pipeline root (download from
+      https://osf.io/ryjfm/, place it in eval/evaluation-pipeline-2025/).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -47,7 +56,6 @@ def _pipeline_dir() -> Path:
 
 
 def ensure_pipeline_cloned() -> Path:
-    """Clone the BabyLM 2025 eval pipeline on first use; return the path."""
     target = _pipeline_dir()
     if target.exists():
         return target
@@ -60,56 +68,103 @@ def ensure_pipeline_cloned() -> Path:
     return target
 
 
-def _run_pipeline_task(pipeline_dir: Path, script_name: str, checkpoint: str) -> dict:
-    """Invoke a single pipeline shell entry point and parse its JSON output.
+def ensure_eval_data(pipeline_dir: Path) -> None:
+    data_dir = pipeline_dir / "evaluation_data"
+    if data_dir.is_dir() and any(data_dir.iterdir()):
+        return
+    sys.exit(
+        f"Missing {data_dir}. Download evaluation_data/ from "
+        "https://osf.io/ryjfm/ and place it under "
+        f"{pipeline_dir.relative_to(_project_root())}/."
+    )
 
-    The 2025 pipeline ships per-task scripts (eval_blimp.sh, eval_glue.sh, ...)
-    that take a checkpoint path and write JSON to results/<task>.json. We
-    shell out, then read the result.
-    """
-    cmd = ["bash", str(pipeline_dir / script_name), checkpoint]
-    print(f"  $ {' '.join(cmd)}")
-    res = subprocess.run(cmd, cwd=pipeline_dir, capture_output=True, text=True)
+
+def _run(cmd: list[str], cwd: Path) -> None:
+    print(f"  $ (cd {cwd.relative_to(_project_root())} && {' '.join(cmd)})")
+    res = subprocess.run(cmd, cwd=cwd)
     if res.returncode != 0:
-        print(res.stdout)
-        print(res.stderr, file=sys.stderr)
-        raise RuntimeError(f"{script_name} failed for {checkpoint}")
-    # Standard pipeline convention: results land under results/<basename>.json.
-    task = script_name.replace("eval_", "").replace(".sh", "")
-    result_path = pipeline_dir / "results" / f"{task}.json"
-    if not result_path.exists():
-        raise FileNotFoundError(f"Expected {result_path} after running {script_name}")
-    with open(result_path, encoding="utf-8") as f:
-        return json.load(f)
+        raise RuntimeError(f"Pipeline command failed: {' '.join(cmd)}")
+
+
+def _parse_kv_file(path: Path) -> dict:
+    out: dict[str, float | str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        k, v = k.strip(), v.strip()
+        try:
+            out[k] = float(v)
+        except ValueError:
+            out[k] = v
+    return out
+
+
+def harvest_results(pipeline_dir: Path, model_basename: str) -> dict:
+    """Glob every results.txt and best_temperature_report.txt the pipeline
+    wrote under results/<model_basename>/ and key them by relative path."""
+    base = pipeline_dir / "results" / model_basename
+    if not base.is_dir():
+        raise FileNotFoundError(f"No results under {base}")
+    out: dict[str, dict] = {}
+    for path in sorted(base.rglob("results.txt")):
+        rel = path.parent.relative_to(base).as_posix()
+        out[rel] = _parse_kv_file(path)
+    for path in sorted(base.rglob("best_temperature_report.txt")):
+        rel = path.parent.relative_to(base).as_posix()
+        out.setdefault(rel, {})
+        out[rel].update(_parse_kv_file(path))
+    return out
 
 
 def evaluate_checkpoint(checkpoint: str, seed: int | None) -> dict:
     pipeline_dir = ensure_pipeline_cloned()
+    ensure_eval_data(pipeline_dir)
 
-    summary: dict = {"checkpoint": checkpoint, "seed": seed}
-    for task_script, key in [
-        ("eval_blimp.sh", "blimp"),
-        ("eval_blimp_supplement.sh", "blimp_supplement"),
-        ("eval_ewok.sh", "ewok"),
-        ("eval_glue.sh", "glue"),
-    ]:
-        try:
-            summary[key] = _run_pipeline_task(pipeline_dir, task_script, checkpoint)
-        except FileNotFoundError as e:
-            # Some pipeline releases ship a single eval.sh; fall back to skipping
-            # the missing per-task entry point and let the user wire it manually.
-            print(f"  skip {key}: {e}", file=sys.stderr)
-            summary[key] = {"error": str(e)}
-    return summary
+    model_basename = Path(checkpoint).name
+    results_root = pipeline_dir / "results" / model_basename
+    if results_root.exists():
+        # Clean prior run for this basename so the harvest is unambiguous.
+        shutil.rmtree(results_root)
+
+    abs_ckpt = str(Path(checkpoint).resolve())
+    seed_arg = str(seed if seed is not None else 42)
+
+    _run(
+        ["bash", "eval_zero_shot.sh", abs_ckpt, "causal"],
+        cwd=pipeline_dir,
+    )
+    _run(
+        # Args (per upstream eval_finetuning.sh):
+        # MODEL_PATH LR BSZ BIG_BSZ MAX_EPOCHS WSC_EPOCHS SEED
+        ["bash", "eval_finetuning.sh",
+         abs_ckpt, "3e-5", "32", "16", "10", "30", seed_arg],
+        cwd=pipeline_dir,
+    )
+
+    tasks = harvest_results(pipeline_dir, model_basename)
+
+    # Move results/<basename>/ -> results/seed{S}/ so concurrent seeds don't
+    # clobber each other.
+    if seed is not None:
+        seed_root = pipeline_dir / "results" / f"seed{seed}"
+        if seed_root.exists():
+            shutil.rmtree(seed_root)
+        shutil.move(results_root, seed_root)
+
+    return {
+        "checkpoint": checkpoint,
+        "seed": seed,
+        "tasks": tasks,
+    }
 
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("checkpoint", help="Path to a HuggingFace checkpoint dir")
     p.add_argument("--seed", type=int, default=None,
-                   help="Seed label used for the output filename (eval_results/seed{S}_babylm.json)")
-    p.add_argument("--output_dir", default=None,
-                   help="Where to write the JSON (default: <project>/eval_results/)")
+                   help="Seed label used for the output filename")
+    p.add_argument("--output_dir", default=None)
     args = p.parse_args()
 
     if not Path(args.checkpoint).exists():
@@ -125,6 +180,9 @@ def main() -> None:
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
     print(f"Wrote {out_path}")
+    print(f"Tasks captured: {len(summary['tasks'])}")
+    for k in sorted(summary["tasks"]):
+        print(f"  {k}")
 
 
 if __name__ == "__main__":
