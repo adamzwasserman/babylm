@@ -55,16 +55,56 @@ def _pipeline_dir() -> Path:
     return _project_root() / "eval" / PIPELINE_DIR_NAME
 
 
+PATCH_MARKER = "# >>> babylm patched: AutoProcessor -> AutoTokenizer fallback"
+
+
+def _patch_dataset_autoprocessor(pipeline_dir: Path) -> None:
+    """Make sentence_zero_shot/dataset.py work for text-only causal LMs.
+
+    Upstream calls AutoProcessor.from_pretrained, which fails on tokenizer-
+    only checkpoints with 'Unrecognized processing class'. We wrap the call
+    in a try/except that falls back to AutoTokenizer. Idempotent — re-run
+    safely after a fresh clone.
+    """
+    target = pipeline_dir / "evaluation_pipeline" / "sentence_zero_shot" / "dataset.py"
+    src = target.read_text(encoding="utf-8")
+    if PATCH_MARKER in src:
+        return
+    needle = (
+        '        self.processor: ProcessorMixin = AutoProcessor.from_pretrained('
+        'args.model_path_or_name, padding_side="right", '
+        'revision=args.revision_name, trust_remote_code=True)'
+    )
+    if needle not in src:
+        print(f"WARN: could not patch {target}; AutoProcessor line not found",
+              file=sys.stderr)
+        return
+    replacement = (
+        f"        {PATCH_MARKER}\n"
+        "        try:\n"
+        "            self.processor: ProcessorMixin = AutoProcessor.from_pretrained("
+        "args.model_path_or_name, padding_side=\"right\", "
+        "revision=args.revision_name, trust_remote_code=True)\n"
+        "        except (ValueError, OSError):\n"
+        "            from transformers import AutoTokenizer\n"
+        "            self.processor = AutoTokenizer.from_pretrained("
+        "args.model_path_or_name, padding_side=\"right\", "
+        "revision=args.revision_name, trust_remote_code=True)"
+    )
+    target.write_text(src.replace(needle, replacement), encoding="utf-8")
+    print(f"Patched {target.relative_to(pipeline_dir)} for text-only checkpoints.")
+
+
 def ensure_pipeline_cloned() -> Path:
     target = _pipeline_dir()
-    if target.exists():
-        return target
-    target.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Cloning {PIPELINE_REPO_URL} into {target}...")
-    subprocess.run(
-        ["git", "clone", "--depth", "1", PIPELINE_REPO_URL, str(target)],
-        check=True,
-    )
+    if not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        print(f"Cloning {PIPELINE_REPO_URL} into {target}...")
+        subprocess.run(
+            ["git", "clone", "--depth", "1", PIPELINE_REPO_URL, str(target)],
+            check=True,
+        )
+    _patch_dataset_autoprocessor(target)
     return target
 
 
