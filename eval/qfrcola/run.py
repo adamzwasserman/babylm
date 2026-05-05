@@ -45,7 +45,7 @@ from transformers import (
     TrainingArguments,
 )
 
-DEFAULT_DATASET = "BaselineQuebec/QFrCoLA"
+DEFAULT_DATASET = "graalul/qfrcola"
 
 
 def _project_root() -> Path:

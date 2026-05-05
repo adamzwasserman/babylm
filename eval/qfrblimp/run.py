@@ -47,36 +47,34 @@ import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-DEFAULT_DATASET = "BaselineQuebec/QFrBLiMP"
+DEFAULT_DATASET = "graalul/qfrblimp"
 
-# Paradigm name -> high-level bucket. Paradigms are the granular phenomena
-# annotated in QFrBLiMP; buckets aggregate them for compact reporting.
-# If your local QFrBLiMP release uses different paradigm names, adjust here.
+# Paradigm name -> high-level bucket, keyed on the dataset's
+# `linguistic_phenomenon` field (mixed French/English labels as published).
+# 20 phenomena are aggregated into 3 buckets; the paper's 4th bucket
+# (anglicism-related) is left empty because the published QFrBLiMP release
+# does not include explicit anglicism paradigms.
 PARADIGM_BUCKETS: dict[str, str] = {
-    # Syntactic
-    "subject_verb_agreement": "syntactic",
-    "wh_movement": "syntactic",
-    "negation_concord": "syntactic",
-    "clitic_placement": "syntactic",
-    "ellipsis": "syntactic",
-    "island_constraint": "syntactic",
-    # Morphological
-    "gender_agreement": "morphological",
-    "number_agreement": "morphological",
-    "verb_inflection": "morphological",
-    "participle_agreement": "morphological",
-    "determiner_morphology": "morphological",
-    # Semantic
-    "argument_structure": "semantic",
-    "binding": "semantic",
-    "quantifier_scope": "semantic",
-    "tense_aspect": "semantic",
-    # Anglicism-related (Quebec-French normative)
-    "anglicism_lexical": "anglicism_related",
-    "anglicism_syntactic": "anglicism_related",
-    "anglicism_morphological": "anglicism_related",
-    "calque": "anglicism_related",
-    "false_friend": "anglicism_related",
+    "Accords participes passés (Past participle agreements)": "morphological",
+    "Flexion du verbe (Verb inflection)": "morphological",
+    "ne ... que (only ... that)": "syntactic",
+    "Sélection morphologie fonctionnelle (Functional morphology selection)": "morphological",
+    "Clitique dans la négation de l'infinitif (Clitics in infinitive negation)": "syntactic",
+    "Montée du clitique (Rising clitics)": "syntactic",
+    "Négation standard (Standard negation)": "syntactic",
+    "Déterminants (Determinants)": "morphological",
+    "Sémantique lexicale (Lexical semantics)": "semantic",
+    "Accord dans l'expression idiomatique (Agreement in idiomatic expression)": "morphological",
+    "Accord des adjectifs (Adjective agreement)": "morphological",
+    "-é / -er": "morphological",
+    "Sélection lexicale du complément (Lexical selection of the complement)": "semantic",
+    "Négation de l'infinitif (Infinitive negation)": "syntactic",
+    "Îlot sujet (Subject island)": "syntactic",
+    "Îlot ajout (Addition island)": "syntactic",
+    "Îlot qu- (Island qu-)": "syntactic",
+    "Îlot SN (SN island)": "syntactic",
+    "Dépendance parasitique avec dont (Parasitic dependence with including)": "syntactic",
+    "Préposition orpheline (Orphan preposition)": "syntactic",
 }
 
 BUCKETS = ("syntactic", "semantic", "morphological", "anglicism_related")
@@ -159,9 +157,9 @@ def main() -> None:
     p.add_argument("--dataset", default=DEFAULT_DATASET,
                    help=f"HF dataset name (default: {DEFAULT_DATASET})")
     p.add_argument("--split", default="test")
-    p.add_argument("--paradigm_field", default="paradigm")
-    p.add_argument("--good_field", default="good")
-    p.add_argument("--bad_field", default="bad")
+    p.add_argument("--paradigm_field", default="linguistic_phenomenon")
+    p.add_argument("--good_field", default="sentence_good")
+    p.add_argument("--bad_field", default="sentence_bad")
     p.add_argument("--output_dir", default=None)
     args = p.parse_args()
 
