@@ -41,7 +41,7 @@ import torch
 from datasets import load_dataset
 from transformers import AutoModel, AutoTokenizer
 
-DEFAULT_SEED_DICT = "BaselineQuebec/fr_en_seed_dict"
+DEFAULT_SEED_DICT = "corpus/bilingual/bilingual_lemmas.txt"
 DEFAULT_HELD_OUT = 48  # paper: 194 train / 48 test on the parsed 242-pair list
 GPT2_EN = "openai-community/gpt2"
 
@@ -177,12 +177,48 @@ def evaluate_target(emb_fr: np.ndarray, vocab_fr: dict[str, int],
     }
 
 
+def parse_bilingual_lemmas_txt(path: Path) -> list[tuple[str, str]]:
+    """Parse corpus/bilingual/bilingual_lemmas.txt.
+
+    Format: one lemma family per line, chunks separated by ' | '. Each chunk
+    is 'fr_token en_phrase' (split on first whitespace). The form-level
+    expansion of the 73-lemma file yields ~125 surface entries; downstream
+    Procrustes filters to single-token-on-both-sides automatically.
+    """
+    out: list[tuple[str, str]] = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            for chunk in line.split(" | "):
+                chunk = chunk.strip()
+                if not chunk:
+                    continue
+                parts = chunk.split(None, 1)
+                if len(parts) < 2:
+                    continue
+                fr, en = parts[0].strip(), parts[1].strip()
+                if fr and en:
+                    out.append((fr, en))
+    return out
+
+
 def load_seed_dict(name_or_path: str, fr_field: str, en_field: str
                     ) -> list[tuple[str, str]]:
-    """Load a (fr, en) seed dictionary. Tries an HF dataset name first, then
-    a local CSV/TSV path with two columns."""
+    """Load a (fr, en) seed dictionary. Resolves in order:
+        1. local path -> .txt (bilingual_lemmas format) or CSV/TSV
+        2. project_root / name_or_path (relative path)
+        3. HuggingFace dataset name
+    """
     p = Path(name_or_path)
+    if not p.exists():
+        rel = _project_root() / name_or_path
+        if rel.exists():
+            p = rel
     if p.exists():
+        if p.suffix.lower() == ".txt":
+            return parse_bilingual_lemmas_txt(p)
         delim = "\t" if p.suffix.lower() in {".tsv", ".tab"} else ","
         out: list[tuple[str, str]] = []
         with open(p, encoding="utf-8") as f:
