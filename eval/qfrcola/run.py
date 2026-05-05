@@ -113,7 +113,6 @@ def evaluate(checkpoint: str, dataset_name: str, seed: int | None,
 
     args = TrainingArguments(
         output_dir=str(output_dir),
-        overwrite_output_dir=True,
         num_train_epochs=num_train_epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size * 2,
