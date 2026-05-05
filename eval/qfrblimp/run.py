@@ -47,34 +47,24 @@ import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-DEFAULT_DATASET = "graalul/qfrblimp"
+# The graalul/qfrblimp HF dataset card declares qfrblimp.jsonl but does not
+# publish it; the actual release lives in the upstream GitHub repo. We default
+# to the raw GitHub URL (load_dataset can fetch json over http) and let users
+# override with --dataset for a cached local copy.
+DEFAULT_DATASET = (
+    "https://raw.githubusercontent.com/davebulaval/QFrBLiMP/main/"
+    "datastore/QFrBLiMP/release/qfrblimp.jsonl"
+)
 
-# Paradigm name -> high-level bucket, keyed on the dataset's
-# `linguistic_phenomenon` field (mixed French/English labels as published).
-# 20 phenomena are aggregated into 3 buckets; the paper's 4th bucket
-# (anglicism-related) is left empty because the published QFrBLiMP release
-# does not include explicit anglicism paradigms.
+# QFrBLiMP's `category` field is itself the paper's high-level bucket
+# (syntax/semantic/morphology/anglicism; counts: 380/398/716/267, total 1761).
+# We expose this map for normalisation only; new categories will fall through
+# to the raw value.
 PARADIGM_BUCKETS: dict[str, str] = {
-    "Accords participes passés (Past participle agreements)": "morphological",
-    "Flexion du verbe (Verb inflection)": "morphological",
-    "ne ... que (only ... that)": "syntactic",
-    "Sélection morphologie fonctionnelle (Functional morphology selection)": "morphological",
-    "Clitique dans la négation de l'infinitif (Clitics in infinitive negation)": "syntactic",
-    "Montée du clitique (Rising clitics)": "syntactic",
-    "Négation standard (Standard negation)": "syntactic",
-    "Déterminants (Determinants)": "morphological",
-    "Sémantique lexicale (Lexical semantics)": "semantic",
-    "Accord dans l'expression idiomatique (Agreement in idiomatic expression)": "morphological",
-    "Accord des adjectifs (Adjective agreement)": "morphological",
-    "-é / -er": "morphological",
-    "Sélection lexicale du complément (Lexical selection of the complement)": "semantic",
-    "Négation de l'infinitif (Infinitive negation)": "syntactic",
-    "Îlot sujet (Subject island)": "syntactic",
-    "Îlot ajout (Addition island)": "syntactic",
-    "Îlot qu- (Island qu-)": "syntactic",
-    "Îlot SN (SN island)": "syntactic",
-    "Dépendance parasitique avec dont (Parasitic dependence with including)": "syntactic",
-    "Préposition orpheline (Orphan preposition)": "syntactic",
+    "syntax": "syntactic",
+    "semantic": "semantic",
+    "morphology": "morphological",
+    "anglicism": "anglicism_related",
 }
 
 BUCKETS = ("syntactic", "semantic", "morphological", "anglicism_related")
@@ -101,7 +91,10 @@ def evaluate(checkpoint: str, dataset_name: str, seed: int | None,
     model = AutoModelForCausalLM.from_pretrained(checkpoint).to(device).eval()
 
     print(f"Loading {dataset_name} (split={split})...")
-    ds = load_dataset(dataset_name, split=split)
+    if dataset_name.startswith(("http://", "https://")) or Path(dataset_name).exists():
+        ds = load_dataset("json", data_files=dataset_name, split="train")
+    else:
+        ds = load_dataset(dataset_name, split=split)
     n = len(ds)
     print(f"  {n} pairs")
 
@@ -157,9 +150,9 @@ def main() -> None:
     p.add_argument("--dataset", default=DEFAULT_DATASET,
                    help=f"HF dataset name (default: {DEFAULT_DATASET})")
     p.add_argument("--split", default="test")
-    p.add_argument("--paradigm_field", default="linguistic_phenomenon")
-    p.add_argument("--good_field", default="sentence_good")
-    p.add_argument("--bad_field", default="sentence_bad")
+    p.add_argument("--paradigm_field", default="category")
+    p.add_argument("--good_field", default="sentence_a")
+    p.add_argument("--bad_field", default="sentence_b")
     p.add_argument("--output_dir", default=None)
     args = p.parse_args()
 
