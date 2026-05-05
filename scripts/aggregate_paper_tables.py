@@ -132,6 +132,73 @@ def table1_qfrblimp(eval_dir: Path) -> tuple[str, str]:
     return "\n".join(tex), "\n".join(md_lines)
 
 
+# ---- §4.1 prose: QFrBLiMP multi-epoch trajectory --------------------------
+
+
+_EPOCH_PAT = re.compile(r"seed(\d+)_qfrblimp_epoch(\d+)\.json$")
+
+
+def trajectory_qfrblimp(eval_dir: Path) -> str:
+    """Per-seed, per-epoch QFrBLiMP overall accuracy. Mirrors the
+    multi-epoch trajectory the paper reports in §4.1 prose."""
+    files = sorted(glob.glob(str(eval_dir / "seed*_qfrblimp_epoch*.json")))
+    if not files:
+        return "(no per-epoch QFrBLiMP results)\n"
+    by_epoch: dict[int, dict[int, float]] = defaultdict(dict)
+    seeds: set[int] = set()
+    for f in files:
+        m = _EPOCH_PAT.search(Path(f).name)
+        if not m:
+            continue
+        seed = int(m.group(1))
+        epoch = int(m.group(2))
+        with open(f, encoding="utf-8") as fh:
+            data = json.load(fh)
+        score = data.get("overall")
+        if score is None:
+            continue
+        by_epoch[epoch][seed] = float(score)
+        seeds.add(seed)
+    if not by_epoch:
+        return "(no per-epoch QFrBLiMP results)\n"
+
+    best_epoch_per_seed: dict[int, int] = {}
+    for s in seeds:
+        bp = eval_dir / f"seed{s}_best_epoch.json"
+        if bp.exists():
+            with open(bp, encoding="utf-8") as fh:
+                d = json.load(fh)
+                if "best_epoch" in d:
+                    best_epoch_per_seed[s] = int(d["best_epoch"])
+
+    seeds_sorted = sorted(seeds)
+    epochs_sorted = sorted(by_epoch.keys())
+    lines = [
+        "## §4.1 prose — QFrBLiMP multi-epoch trajectory",
+        "",
+        "Overall accuracy per seed (rows = epochs).",
+        "Per-seed best epoch is marked with *; that is the row picked for Table 1.",
+        "",
+        "| Epoch | " + " | ".join(f"seed {s}" for s in seeds_sorted) + " | mean +/- std |",
+        "|" + "---|" * (len(seeds_sorted) + 2),
+    ]
+    for epoch in epochs_sorted:
+        cells: list[str] = []
+        vals: list[float] = []
+        for s in seeds_sorted:
+            v = by_epoch[epoch].get(s)
+            if v is None:
+                cells.append("-")
+            else:
+                marker = "*" if best_epoch_per_seed.get(s) == epoch else ""
+                cells.append(f"{v * 100:.2f}{marker}")
+                vals.append(v)
+        cells.append(fmt_md(vals) if vals else "-")
+        lines.append(f"| {epoch} | " + " | ".join(cells) + " |")
+    lines.append("")
+    return "\n".join(lines)
+
+
 # ---- §4.1 prose: QFrCoLA --------------------------------------------------
 
 
@@ -383,13 +450,16 @@ def main() -> None:
         sys.exit(f"eval directory not found: {eval_dir}")
 
     t1_tex, t1_md = table1_qfrblimp(eval_dir)
+    traj_md = trajectory_qfrblimp(eval_dir)
     t2_tex, t2_md = table2_bli(eval_dir)
     t3_tex, t3_md = table3_xling_glue(eval_dir)
     qcola_md = prose_qfrcola(eval_dir)
     babylm_md = prose_babylm(eval_dir)
 
     tex_block = "\n\n".join(b for b in (t1_tex, t2_tex, t3_tex) if b)
-    md_block = "\n\n".join(b for b in (t1_md, qcola_md, babylm_md, t2_md, t3_md) if b)
+    md_block = "\n\n".join(
+        b for b in (t1_md, traj_md, qcola_md, babylm_md, t2_md, t3_md) if b
+    )
 
     if args.output:
         Path(args.output).write_text(tex_block + "\n", encoding="utf-8")

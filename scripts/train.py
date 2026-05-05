@@ -371,6 +371,11 @@ def _run_training_loop(
     """
     next_ckpt_idx = compute_next_ckpt_idx(words_processed, CHECKPOINT_WORDS)
 
+    # Words processed per epoch (constant across epochs); used for the
+    # paper's chck_NM_epoch{E} per-epoch checkpoint naming convention.
+    words_per_epoch = int(len(dataloader) * tokens_per_batch * words_per_token)
+    words_per_epoch_M = max(1, words_per_epoch // 1_000_000)
+
     # Training loop
     model.train()
     global_step = 0
@@ -444,11 +449,33 @@ def _run_training_loop(
                     }, step=global_step)
                 next_ckpt_idx += 1
 
-    # Final save
-    save_checkpoint(model, tokenizer, words_processed, args.output_dir)
-    print(f"\nTraining complete. {words_processed/1e6:.1f}M words processed.")
+        # End-of-epoch checkpoint: the paper picks the grammatical-competence
+        # peak across epochs (chck_NM_epoch{E}), so we save one per epoch and
+        # let downstream eval pick the best.
+        epoch_dir = os.path.join(
+            args.output_dir, f"chck_{words_per_epoch_M}M_epoch{epoch + 1}",
+        )
+        model.save_pretrained(epoch_dir)
+        tokenizer.save_pretrained(epoch_dir)
+        with open(os.path.join(epoch_dir, "training_meta.json"), "w") as f:
+            json.dump({
+                "words_processed": words_processed,
+                "words_per_epoch": words_per_epoch,
+                "epoch": epoch + 1,
+                "checkpoint_name": os.path.basename(epoch_dir),
+            }, f, indent=2)
+        print(f"  Epoch {epoch + 1} checkpoint saved: {epoch_dir}")
+        if wandb_run is not None:
+            wandb_run.log({
+                "checkpoint/epoch": epoch + 1,
+                "checkpoint/epoch_words": words_per_epoch,
+            }, step=global_step)
+
+    print(f"\nTraining complete. {words_processed/1e6:.1f}M words processed,"
+          f" {args.epochs} epoch(s).")
     print(f"Total time: {(time.time() - t0)/3600:.1f}h")
-    print(f"\nTo evaluate: ./eval_zero_shot.sh {args.output_dir}/chck_<N>M causal")
+    print(f"Per-epoch checkpoints: {args.output_dir}/chck_{words_per_epoch_M}M_epoch{{1..{args.epochs}}}/")
+    print("Run scripts/run_paper_part1.sh to eval and pick the best epoch per seed.")
 
 
 if __name__ == "__main__":

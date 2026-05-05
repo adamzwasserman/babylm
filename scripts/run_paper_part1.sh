@@ -74,8 +74,11 @@ CKPT_NAME="${CKPT_NAME:-}"
 LOG_DIR="logs/paper_part1"
 mkdir -p "$LOG_DIR" eval_results
 
-# Resolve the checkpoint path for one seed. Honors $CKPT_NAME if set,
-# otherwise picks the chck_NM/ with the largest N inside models/seed{S}/.
+# Resolve the checkpoint path for one seed. Resolution order:
+#   1. $CKPT_NAME (explicit override, e.g. "chck_92M_epoch3")
+#   2. models/seed{S}/best         (symlink set by phase 2's pick)
+#   3. highest chck_NM_epoch{E}/   (last epoch saved)
+#   4. highest chck_NM/            (BabyLM-cadence checkpoint, legacy)
 resolve_ckpt() {
     local seed=$1
     local seed_dir="models/seed${seed}"
@@ -83,23 +86,35 @@ resolve_ckpt() {
         echo "${seed_dir}/${CKPT_NAME}"
         return
     fi
+    if [ -L "${seed_dir}/best" ] || [ -d "${seed_dir}/best" ]; then
+        echo "${seed_dir}/best"
+        return
+    fi
     local best=""
     local best_n=-1
-    for d in "${seed_dir}"/chck_*M; do
+    for d in "${seed_dir}"/chck_*M_epoch*; do
         [ -d "$d" ] || continue
-        local base
-        base=$(basename "$d")
-        # base looks like chck_92M; extract the integer between chck_ and M
-        local n=${base#chck_}
-        n=${n%M}
-        if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$best_n" ]; then
-            best_n=$n
+        local epoch
+        epoch=$(basename "$d" | sed -E 's/.*_epoch([0-9]+).*/\1/')
+        if [[ "$epoch" =~ ^[0-9]+$ ]] && [ "$epoch" -gt "$best_n" ]; then
+            best_n=$epoch
             best=$d
         fi
     done
     if [ -z "$best" ]; then
-        # Fall back to a stable default so the error message in the eval
-        # script is informative ("checkpoint not found: models/seed42/chck_92M")
+        for d in "${seed_dir}"/chck_*M; do
+            [ -d "$d" ] || continue
+            local base
+            base=$(basename "$d")
+            local n=${base#chck_}
+            n=${n%M}
+            if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$best_n" ]; then
+                best_n=$n
+                best=$d
+            fi
+        done
+    fi
+    if [ -z "$best" ]; then
         echo "${seed_dir}/chck_92M"
     else
         echo "$best"
@@ -202,13 +217,49 @@ eval_seed() {
 
 CKPT_PATH() { resolve_ckpt "$1"; }
 
-# -------- Phase 2: QFrBLiMP --------------------------------------------------
+# -------- Phase 2: QFrBLiMP per epoch + best-epoch selection ---------------
 
 if ! skip_phase 2; then
-    phase_header 2 "QFrBLiMP zero-shot"
+    phase_header 2 "QFrBLiMP zero-shot (per epoch) + best-epoch selection"
     for s in "${SEEDS[@]}"; do
-        eval_seed 2 "QFrBLiMP" "$s" "eval_results/seed${s}_qfrblimp.json" \
-            python eval/qfrblimp/run.py "$(CKPT_PATH "$s")" --seed "$s"
+        epoch_ckpts=()
+        for ckpt in models/seed${s}/chck_*M_epoch*; do
+            [ -d "$ckpt" ] || continue
+            epoch_ckpts+=("$ckpt")
+        done
+        if [ ${#epoch_ckpts[@]} -eq 0 ]; then
+            # Fall back to legacy single-checkpoint behaviour: eval the
+            # highest BabyLM-cadence checkpoint and treat it as "epoch 1".
+            ckpt=$(resolve_ckpt "$s")
+            out="eval_results/seed${s}_qfrblimp_epoch1.json"
+            if ! skipped "$out"; then
+                log="$LOG_DIR/phase2_seed${s}_epoch1.log"
+                echo "  [phase 2] seed=$s epoch=1 (legacy): $ckpt -> $out (log: $log)"
+                python eval/qfrblimp/run.py "$ckpt" --seed "$s" 2>&1 | tee "$log"
+                mv "eval_results/seed${s}_qfrblimp.json" "$out"
+            fi
+        else
+            for ckpt in "${epoch_ckpts[@]}"; do
+                epoch=$(basename "$ckpt" | sed -E 's/.*_epoch([0-9]+).*/\1/')
+                out="eval_results/seed${s}_qfrblimp_epoch${epoch}.json"
+                if skipped "$out"; then
+                    echo "  [phase 2] seed=$s epoch=$epoch: $out exists, skipping"
+                    continue
+                fi
+                log="$LOG_DIR/phase2_seed${s}_epoch${epoch}.log"
+                echo "  [phase 2] seed=$s epoch=$epoch: $ckpt -> $out (log: $log)"
+                python eval/qfrblimp/run.py "$ckpt" --seed "$s" 2>&1 | tee "$log"
+                # The eval script writes seed{S}_qfrblimp.json; rename to
+                # the per-epoch filename so all epochs are preserved.
+                mv "eval_results/seed${s}_qfrblimp.json" "$out"
+            done
+        fi
+    done
+
+    echo
+    echo "-- Picking best epoch per seed (argmax QFrBLiMP overall) --"
+    for s in "${SEEDS[@]}"; do
+        python scripts/_pick_best_epoch.py --seed "$s"
     done
 fi
 
