@@ -75,31 +75,31 @@ class TaskSpec:
 TASK_SPECS: dict[str, TaskSpec] = {
     "boolq": TaskSpec(
         en_dataset="super_glue", en_subset="boolq",
-        fr_dataset="BaselineQuebec/glue-fr", fr_subset="boolq",
+        fr_dataset="submission/glue_fr", fr_subset="boolq",
         text_a_field="question", text_b_field="passage",
         label_field="label", n_labels=2, metric="accuracy",
     ),
     "rte": TaskSpec(
         en_dataset="super_glue", en_subset="rte",
-        fr_dataset="BaselineQuebec/glue-fr", fr_subset="rte",
+        fr_dataset="submission/glue_fr", fr_subset="rte",
         text_a_field="premise", text_b_field="hypothesis",
         label_field="label", n_labels=2, metric="accuracy",
     ),
     "mrpc": TaskSpec(
         en_dataset="glue", en_subset="mrpc",
-        fr_dataset="BaselineQuebec/glue-fr", fr_subset="mrpc",
+        fr_dataset="submission/glue_fr", fr_subset="mrpc",
         text_a_field="sentence1", text_b_field="sentence2",
         label_field="label", n_labels=2, metric="accuracy",
     ),
     "wsc": TaskSpec(
         en_dataset="super_glue", en_subset="wsc.fixed",
-        fr_dataset="BaselineQuebec/glue-fr", fr_subset="wsc",
+        fr_dataset="submission/glue_fr", fr_subset="wsc",
         text_a_field="text", text_b_field=None,
         label_field="label", n_labels=2, metric="accuracy",
     ),
     "mnli": TaskSpec(
         en_dataset="glue", en_subset="mnli",
-        fr_dataset="BaselineQuebec/glue-fr", fr_subset="mnli",
+        fr_dataset="submission/glue_fr", fr_subset="mnli",
         text_a_field="premise", text_b_field="hypothesis",
         label_field="label", n_labels=3, metric="accuracy",
         val_split="validation_matched",
@@ -167,6 +167,24 @@ def load_task_split(spec: TaskSpec, language: str, split: str,
 
     fr_ds = fr_dataset_override or spec.fr_dataset
     fr_sub = fr_subset_override or spec.fr_subset
+
+    # Local directory of {task}.{train,valid}.jsonl files (the FR-translated
+    # GLUE shipped under submission/glue_fr/). Multiple HF validation split
+    # names (validation, validation_matched, validation_mismatched) all map
+    # to the single local valid.jsonl.
+    fr_ds_path = Path(fr_ds)
+    if not fr_ds_path.is_absolute():
+        fr_ds_path = _project_root() / fr_ds_path
+    if fr_ds_path.is_dir():
+        local_split = "train" if split == "train" else "valid"
+        data_file = fr_ds_path / f"{fr_sub}.{local_split}.jsonl"
+        if not data_file.exists():
+            raise FileNotFoundError(
+                f"Expected translated GLUE file {data_file} (task={fr_sub}, "
+                f"split={split} -> {local_split})"
+            )
+        return load_dataset("json", data_files=str(data_file), split="train")
+
     if fr_sub:
         return load_dataset(fr_ds, fr_sub, split=split)
     return load_dataset(fr_ds, split=split)
