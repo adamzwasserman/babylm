@@ -56,43 +56,86 @@ def _pipeline_dir() -> Path:
 
 
 PATCH_MARKER = "# >>> babylm patched: AutoProcessor -> AutoTokenizer fallback"
+PAD_TOKEN_MARKER = "# >>> babylm patched: pad_token fallback"
+
+
+def _patch_file(target: Path, marker: str, needle: str, replacement: str,
+                pipeline_dir: Path) -> None:
+    src = target.read_text(encoding="utf-8")
+    if marker in src:
+        return
+    if needle not in src:
+        print(f"WARN: could not patch {target}; needle not found",
+              file=sys.stderr)
+        return
+    target.write_text(src.replace(needle, replacement), encoding="utf-8")
+    print(f"Patched {target.relative_to(pipeline_dir)}.")
 
 
 def _patch_dataset_autoprocessor(pipeline_dir: Path) -> None:
-    """Make sentence_zero_shot/dataset.py work for text-only causal LMs.
+    """Make the cloned pipeline work for text-only causal LMs.
 
-    Upstream calls AutoProcessor.from_pretrained, which fails on tokenizer-
-    only checkpoints with 'Unrecognized processing class'. We wrap the call
-    in a try/except that falls back to AutoTokenizer. Idempotent — re-run
-    safely after a fresh clone.
+    Upstream calls AutoProcessor.from_pretrained in two places (sentence
+    zero-shot and finetuning trainer). Both fail on tokenizer-only
+    checkpoints with 'Unrecognized processing class'. We wrap each call in a
+    try/except that falls back to AutoTokenizer, and ensure the tokenizer
+    has a pad_token (set to eos_token, fallback unk_token) for fine-tuning.
+    Patches are marked with comments so they are idempotent across reruns.
     """
-    target = pipeline_dir / "evaluation_pipeline" / "sentence_zero_shot" / "dataset.py"
-    src = target.read_text(encoding="utf-8")
-    if PATCH_MARKER in src:
-        return
-    needle = (
-        '        self.processor: ProcessorMixin = AutoProcessor.from_pretrained('
-        'args.model_path_or_name, padding_side="right", '
-        'revision=args.revision_name, trust_remote_code=True)'
+    # 1. sentence_zero_shot/dataset.py
+    _patch_file(
+        target=pipeline_dir / "evaluation_pipeline" / "sentence_zero_shot" / "dataset.py",
+        marker=PATCH_MARKER,
+        needle=(
+            '        self.processor: ProcessorMixin = AutoProcessor.from_pretrained('
+            'args.model_path_or_name, padding_side="right", '
+            'revision=args.revision_name, trust_remote_code=True)'
+        ),
+        replacement=(
+            f"        {PATCH_MARKER}\n"
+            "        try:\n"
+            "            self.processor: ProcessorMixin = AutoProcessor.from_pretrained("
+            "args.model_path_or_name, padding_side=\"right\", "
+            "revision=args.revision_name, trust_remote_code=True)\n"
+            "        except (ValueError, OSError):\n"
+            "            from transformers import AutoTokenizer\n"
+            "            self.processor = AutoTokenizer.from_pretrained("
+            "args.model_path_or_name, padding_side=\"right\", "
+            "revision=args.revision_name, trust_remote_code=True)"
+        ),
+        pipeline_dir=pipeline_dir,
     )
-    if needle not in src:
-        print(f"WARN: could not patch {target}; AutoProcessor line not found",
-              file=sys.stderr)
-        return
-    replacement = (
-        f"        {PATCH_MARKER}\n"
-        "        try:\n"
-        "            self.processor: ProcessorMixin = AutoProcessor.from_pretrained("
-        "args.model_path_or_name, padding_side=\"right\", "
-        "revision=args.revision_name, trust_remote_code=True)\n"
-        "        except (ValueError, OSError):\n"
-        "            from transformers import AutoTokenizer\n"
-        "            self.processor = AutoTokenizer.from_pretrained("
-        "args.model_path_or_name, padding_side=\"right\", "
-        "revision=args.revision_name, trust_remote_code=True)"
+
+    # 2. finetune/trainer.py: same AutoProcessor issue + ensure pad_token.
+    _patch_file(
+        target=pipeline_dir / "evaluation_pipeline" / "finetune" / "trainer.py",
+        marker=PATCH_MARKER,
+        needle=(
+            "        self.tokenizer: PreTrainedTokenizerBase = "
+            "AutoProcessor.from_pretrained(self.args.model_name_or_path, "
+            "trust_remote_code=True, padding_side=self.args.padding_side)"
+        ),
+        replacement=(
+            f"        {PATCH_MARKER}\n"
+            "        try:\n"
+            "            self.tokenizer: PreTrainedTokenizerBase = "
+            "AutoProcessor.from_pretrained(self.args.model_name_or_path, "
+            "trust_remote_code=True, padding_side=self.args.padding_side)\n"
+            "        except (ValueError, OSError):\n"
+            "            from transformers import AutoTokenizer\n"
+            "            self.tokenizer = AutoTokenizer.from_pretrained("
+            "self.args.model_name_or_path, trust_remote_code=True, "
+            "padding_side=self.args.padding_side)\n"
+            f"        {PAD_TOKEN_MARKER}\n"
+            "        if getattr(self.tokenizer, 'pad_token', None) is None:\n"
+            "            self.tokenizer.pad_token = (self.tokenizer.eos_token "
+            "or self.tokenizer.unk_token or self.tokenizer.bos_token)\n"
+            "            if self.tokenizer.pad_token is None:\n"
+            "                self.tokenizer.add_special_tokens({'pad_token': "
+            "'[PAD]'})"
+        ),
+        pipeline_dir=pipeline_dir,
     )
-    target.write_text(src.replace(needle, replacement), encoding="utf-8")
-    print(f"Patched {target.relative_to(pipeline_dir)} for text-only checkpoints.")
 
 
 def ensure_pipeline_cloned() -> Path:
