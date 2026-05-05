@@ -31,7 +31,7 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import (
     GPT2Config,
     GPT2LMHeadModel,
-    PreTrainedTokenizerFast,
+    GPT2TokenizerFast,
 )
 
 
@@ -118,7 +118,7 @@ def train_tokenizer(corpus_path, vocab_size, save_dir):
 
     if os.path.exists(tokenizer_path):
         print(f"Loading existing tokenizer from {tokenizer_path}")
-        return PreTrainedTokenizerFast(tokenizer_file=tokenizer_path)
+        return GPT2TokenizerFast(tokenizer_file=tokenizer_path)
 
     print(f"Training BPE tokenizer (vocab_size={vocab_size})...")
     tokenizer = Tokenizer(models.BPE())
@@ -133,7 +133,7 @@ def train_tokenizer(corpus_path, vocab_size, save_dir):
     tokenizer.train([corpus_path], trainer)
     tokenizer.save(tokenizer_path)
 
-    hf_tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_path)
+    hf_tokenizer = GPT2TokenizerFast(tokenizer_file=tokenizer_path)
     hf_tokenizer.pad_token = "<|padding|>"
     hf_tokenizer.eos_token = "<|endoftext|>"
     hf_tokenizer.bos_token = "<|endoftext|>"
