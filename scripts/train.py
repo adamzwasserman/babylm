@@ -189,6 +189,10 @@ def create_model(vocab_size):
         attn_pdrop=0.1,
         bos_token_id=0,
         eos_token_id=0,
+        # AutoProcessor (used by the BabyLM 2025 eval pipeline) needs an
+        # explicit tokenizer class on text-only checkpoints; otherwise it
+        # fails with 'Unrecognized processing class'.
+        tokenizer_class="GPT2TokenizerFast",
     )
     model = GPT2LMHeadModel(config)
     n_params = sum(p.numel() for p in model.parameters())
