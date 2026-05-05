@@ -87,11 +87,23 @@ def evaluate(checkpoint: str, dataset_name: str, seed: int | None,
 
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+        # The project's BPE tokenizer is trained without special tokens, so
+        # eos/bos may also be None on a fresh checkpoint. Fall back through
+        # the available special tokens, or register a [PAD] if everything is
+        # missing — the embedding row is added to the model below.
+        fallback = (tokenizer.eos_token
+                    or tokenizer.bos_token
+                    or tokenizer.unk_token)
+        if fallback is not None:
+            tokenizer.pad_token = fallback
+        else:
+            tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
     model = AutoModelForSequenceClassification.from_pretrained(
         checkpoint, num_labels=2,
     )
+    if model.get_input_embeddings().num_embeddings < len(tokenizer):
+        model.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id = tokenizer.pad_token_id
     model.to(device)
 
