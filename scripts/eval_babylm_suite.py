@@ -117,9 +117,54 @@ def harvest_results(pipeline_dir: Path, model_basename: str) -> dict:
     return out
 
 
+# (task, data_path_relative_to_full_eval) for the upstream zero-shot suite.
+# We invoke each task separately so that a missing data directory (e.g. EWoK,
+# which the OSF dump omits and the pipeline ships a separate downloader for)
+# results in a skip rather than the whole suite aborting.
+ZERO_SHOT_TASKS: list[tuple[str, str]] = [
+    ("blimp", "blimp_filtered"),
+    ("blimp", "supplement_filtered"),
+    ("ewok", "ewok_filtered"),
+    ("entity_tracking", "entity_tracking"),
+    ("wug_adj", "wug_adj_nominalization"),
+    ("wug_past", "wug_past_tense"),
+    ("comps", "comps"),
+]
+
+
+def _run_zero_shot(pipeline_dir: Path, abs_ckpt: str, eval_dir: Path) -> None:
+    for task, subdir in ZERO_SHOT_TASKS:
+        data_path = eval_dir / subdir
+        if not data_path.is_dir():
+            print(f"  skip zero-shot {task} ({subdir} missing)")
+            continue
+        _run(
+            ["python", "-m", "evaluation_pipeline.sentence_zero_shot.run",
+             "--model_path_or_name", abs_ckpt, "--backend", "causal",
+             "--task", task, "--data_path", str(data_path),
+             "--save_predictions"],
+            cwd=pipeline_dir,
+        )
+    reading_csv = eval_dir / "reading" / "reading_data.csv"
+    if reading_csv.is_file():
+        _run(
+            ["python", "-m", "evaluation_pipeline.reading.run",
+             "--model_path_or_name", abs_ckpt, "--backend", "causal",
+             "--data_path", str(reading_csv)],
+            cwd=pipeline_dir,
+        )
+    else:
+        print("  skip reading (reading_data.csv missing)")
+
+
 def evaluate_checkpoint(checkpoint: str, seed: int | None) -> dict:
     pipeline_dir = ensure_pipeline_cloned()
     ensure_eval_data(pipeline_dir)
+
+    eval_dir = pipeline_dir / "evaluation_data" / "full_eval"
+    if not eval_dir.is_dir():
+        sys.exit(f"Missing {eval_dir}; the pipeline shell scripts assume "
+                 "evaluation_data/full_eval/ exists.")
 
     model_basename = Path(checkpoint).name
     results_root = pipeline_dir / "results" / model_basename
@@ -130,10 +175,7 @@ def evaluate_checkpoint(checkpoint: str, seed: int | None) -> dict:
     abs_ckpt = str(Path(checkpoint).resolve())
     seed_arg = str(seed if seed is not None else 42)
 
-    _run(
-        ["bash", "eval_zero_shot.sh", abs_ckpt, "causal"],
-        cwd=pipeline_dir,
-    )
+    _run_zero_shot(pipeline_dir, abs_ckpt, eval_dir)
     _run(
         # Args (per upstream eval_finetuning.sh):
         # MODEL_PATH LR BSZ BIG_BSZ MAX_EPOCHS WSC_EPOCHS SEED
