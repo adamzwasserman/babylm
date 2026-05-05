@@ -38,7 +38,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -183,21 +182,40 @@ def _parse_kv_file(path: Path) -> dict:
     return out
 
 
-def harvest_results(pipeline_dir: Path, model_basename: str) -> dict:
-    """Glob every results.txt and best_temperature_report.txt the pipeline
-    wrote under results/<model_basename>/ and key them by relative path."""
-    base = pipeline_dir / "results" / model_basename
-    if not base.is_dir():
-        raise FileNotFoundError(f"No results under {base}")
+def harvest_results(pipeline_dir: Path,
+                     existing_files: set[Path]) -> dict:
+    """Glob every results.txt and best_temperature_report.txt under
+    results/ that did NOT exist before this run, key them by path relative
+    to results/. The pipeline writes paths that depend on the model's full
+    name (basename or absolute path), so we filter by what's new instead of
+    by a fixed prefix."""
+    results_root = pipeline_dir / "results"
+    if not results_root.is_dir():
+        raise FileNotFoundError(f"No results dir at {results_root}")
     out: dict[str, dict] = {}
-    for path in sorted(base.rglob("results.txt")):
-        rel = path.parent.relative_to(base).as_posix()
-        out[rel] = _parse_kv_file(path)
-    for path in sorted(base.rglob("best_temperature_report.txt")):
-        rel = path.parent.relative_to(base).as_posix()
-        out.setdefault(rel, {})
-        out[rel].update(_parse_kv_file(path))
+    for pattern in ("results.txt", "best_temperature_report.txt"):
+        for path in sorted(results_root.rglob(pattern)):
+            if path in existing_files:
+                continue
+            rel = path.parent.relative_to(results_root).as_posix()
+            out.setdefault(rel, {})
+            out[rel].update(_parse_kv_file(path))
+    if not out:
+        raise FileNotFoundError(
+            f"No new results.txt / best_temperature_report.txt under "
+            f"{results_root} after running the pipeline."
+        )
     return out
+
+
+def _snapshot_results(pipeline_dir: Path) -> set[Path]:
+    results_root = pipeline_dir / "results"
+    if not results_root.is_dir():
+        return set()
+    found: set[Path] = set()
+    for pattern in ("results.txt", "best_temperature_report.txt"):
+        found.update(results_root.rglob(pattern))
+    return found
 
 
 # (task, data_path_relative_to_full_eval) for the upstream zero-shot suite.
@@ -249,14 +267,13 @@ def evaluate_checkpoint(checkpoint: str, seed: int | None) -> dict:
         sys.exit(f"Missing {eval_dir}; the pipeline shell scripts assume "
                  "evaluation_data/full_eval/ exists.")
 
-    model_basename = Path(checkpoint).name
-    results_root = pipeline_dir / "results" / model_basename
-    if results_root.exists():
-        # Clean prior run for this basename so the harvest is unambiguous.
-        shutil.rmtree(results_root)
-
     abs_ckpt = str(Path(checkpoint).resolve())
     seed_arg = str(seed if seed is not None else 42)
+
+    # Snapshot existing results so we know which output files this run
+    # produces (the pipeline keys outputs by the model name, which can be
+    # a basename or full path depending on the entry point).
+    pre_snapshot = _snapshot_results(pipeline_dir)
 
     _run_zero_shot(pipeline_dir, abs_ckpt, eval_dir)
     _run(
@@ -267,15 +284,7 @@ def evaluate_checkpoint(checkpoint: str, seed: int | None) -> dict:
         cwd=pipeline_dir,
     )
 
-    tasks = harvest_results(pipeline_dir, model_basename)
-
-    # Move results/<basename>/ -> results/seed{S}/ so concurrent seeds don't
-    # clobber each other.
-    if seed is not None:
-        seed_root = pipeline_dir / "results" / f"seed{seed}"
-        if seed_root.exists():
-            shutil.rmtree(seed_root)
-        shutil.move(results_root, seed_root)
+    tasks = harvest_results(pipeline_dir, pre_snapshot)
 
     return {
         "checkpoint": checkpoint,
