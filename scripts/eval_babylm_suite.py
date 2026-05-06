@@ -183,38 +183,41 @@ def _parse_kv_file(path: Path) -> dict:
 
 
 def harvest_results(pipeline_dir: Path,
-                     existing_files: set[Path]) -> dict:
+                     pre_snapshot: dict[Path, float]) -> dict:
     """Glob every results.txt and best_temperature_report.txt under
-    results/ that did NOT exist before this run, key them by path relative
-    to results/. The pipeline writes paths that depend on the model's full
-    name (basename or absolute path), so we filter by what's new instead of
-    by a fixed prefix."""
+    results/ whose mtime is newer than the snapshot (or that didn't exist
+    in the snapshot at all). The pipeline writes paths that depend on the
+    model's full name and re-runs overwrite the same files, so existence
+    alone isn't enough — we also require mtime > pre-run."""
     results_root = pipeline_dir / "results"
     if not results_root.is_dir():
         raise FileNotFoundError(f"No results dir at {results_root}")
     out: dict[str, dict] = {}
     for pattern in ("results.txt", "best_temperature_report.txt"):
         for path in sorted(results_root.rglob(pattern)):
-            if path in existing_files:
+            mtime = path.stat().st_mtime
+            prior = pre_snapshot.get(path)
+            if prior is not None and mtime <= prior:
                 continue
             rel = path.parent.relative_to(results_root).as_posix()
             out.setdefault(rel, {})
             out[rel].update(_parse_kv_file(path))
     if not out:
         raise FileNotFoundError(
-            f"No new results.txt / best_temperature_report.txt under "
-            f"{results_root} after running the pipeline."
+            f"No new or refreshed results.txt / best_temperature_report.txt "
+            f"under {results_root} after running the pipeline."
         )
     return out
 
 
-def _snapshot_results(pipeline_dir: Path) -> set[Path]:
+def _snapshot_results(pipeline_dir: Path) -> dict[Path, float]:
     results_root = pipeline_dir / "results"
     if not results_root.is_dir():
-        return set()
-    found: set[Path] = set()
+        return {}
+    found: dict[Path, float] = {}
     for pattern in ("results.txt", "best_temperature_report.txt"):
-        found.update(results_root.rglob(pattern))
+        for path in results_root.rglob(pattern):
+            found[path] = path.stat().st_mtime
     return found
 
 
