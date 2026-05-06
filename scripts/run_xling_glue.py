@@ -55,7 +55,13 @@ TASKS = ("boolq", "rte", "mrpc", "wsc", "mnli")
 
 @dataclass
 class TaskSpec:
-    """How to load and score a GLUE-style task in both English and French."""
+    """How to load and score a GLUE-style task in both English and French.
+
+    text_a_field / text_b_field describe the EN dataset; fr_text_a_field /
+    fr_text_b_field override on the FR side when the translated release uses
+    different column names (e.g. RTE's super_glue is premise/hypothesis but
+    the shipped FR translation uses sentence1/sentence2).
+    """
     en_dataset: str
     en_subset: str | None
     fr_dataset: str
@@ -66,6 +72,17 @@ class TaskSpec:
     n_labels: int
     metric: str  # "accuracy" or "matthews"
     val_split: str = "validation"
+    fr_text_a_field: str | None = None
+    fr_text_b_field: str | None = None
+
+
+def fields_for(spec: TaskSpec, language: str) -> tuple[str, str | None]:
+    if language == "fr":
+        a = spec.fr_text_a_field or spec.text_a_field
+        b = (spec.fr_text_b_field if spec.fr_text_b_field is not None
+             else spec.text_b_field)
+        return a, b
+    return spec.text_a_field, spec.text_b_field
 
 
 # Task specifications. The fr_dataset entries point to the French-translated
@@ -83,6 +100,7 @@ TASK_SPECS: dict[str, TaskSpec] = {
         en_dataset="super_glue", en_subset="rte",
         fr_dataset="submission/glue_fr", fr_subset="rte",
         text_a_field="premise", text_b_field="hypothesis",
+        fr_text_a_field="sentence1", fr_text_b_field="sentence2",
         label_field="label", n_labels=2, metric="accuracy",
     ),
     "mrpc": TaskSpec(
@@ -146,12 +164,14 @@ def _project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-def encode_pairs(examples, tokenizer, spec: TaskSpec, max_length: int):
-    a = examples[spec.text_a_field]
-    if spec.text_b_field is None:
+def encode_pairs(examples, tokenizer, spec: TaskSpec, max_length: int,
+                  language: str):
+    a_field, b_field = fields_for(spec, language)
+    a = examples[a_field]
+    if b_field is None:
         out = tokenizer(a, truncation=True, max_length=max_length)
     else:
-        b = examples[spec.text_b_field]
+        b = examples[b_field]
         out = tokenizer(a, b, truncation=True, max_length=max_length)
     out["labels"] = examples[spec.label_field]
     return out
@@ -256,14 +276,19 @@ def run_one_cell(checkpoint: str, lever: str, task: str, seed: int | None,
         fr_dataset_override, fr_subset_override,
     )
 
-    def _tok(b):
-        return encode_pairs(b, tokenizer, spec, max_length)
+    def _tok_train(b):
+        return encode_pairs(b, tokenizer, spec, max_length,
+                            lspec.train_data_language)
+
+    def _tok_eval(b):
+        return encode_pairs(b, tokenizer, spec, max_length,
+                            lspec.eval_data_language)
 
     keep_after_tok = [spec.label_field]
-    train_ds = train_raw.map(_tok, batched=True,
+    train_ds = train_raw.map(_tok_train, batched=True,
                               remove_columns=[c for c in train_raw.column_names
                                               if c not in keep_after_tok])
-    val_ds = val_raw.map(_tok, batched=True,
+    val_ds = val_raw.map(_tok_eval, batched=True,
                           remove_columns=[c for c in val_raw.column_names
                                           if c not in keep_after_tok])
 
