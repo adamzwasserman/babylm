@@ -327,6 +327,8 @@ def main() -> None:
     p.add_argument("--task", choices=list(TASKS) + ["all"], default="all")
     p.add_argument("--all_levers", action="store_true")
     p.add_argument("--all_tasks", action="store_true")
+    p.add_argument("--force", action="store_true",
+                   help="Re-run cells even if their JSON already exists")
     p.add_argument("--batch_size", type=int, default=16)
     p.add_argument("--lr", type=float, default=2e-4)
     p.add_argument("--max_length", type=int, default=256)
@@ -351,13 +353,17 @@ def main() -> None:
 
     for lever in levers:
         for task in tasks:
+            out_path = out_dir / f"{seed_tag}_xglue_{lever.replace('+', '')}_{task}.json"
+            if out_path.exists() and not args.force:
+                print(f"\n=== {seed_tag} | lever={lever} | task={task} === SKIP "
+                      f"({out_path.name} exists; pass --force to redo)")
+                continue
             print(f"\n=== {seed_tag} | lever={lever} | task={task} ===")
             res = run_one_cell(
                 args.checkpoint, lever, task, args.seed,
                 args.batch_size, args.lr, args.max_length,
                 args.fr_dataset, args.fr_subset,
             )
-            out_path = out_dir / f"{seed_tag}_xglue_{lever.replace('+', '')}_{task}.json"
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(res, f, indent=2, ensure_ascii=False)
             print(f"Wrote {out_path}")
