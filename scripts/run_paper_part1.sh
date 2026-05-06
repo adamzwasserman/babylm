@@ -296,17 +296,52 @@ fi
 # -------- Phase 6: Cross-lingual GLUE grid ----------------------------------
 
 if ! skip_phase 6; then
-    phase_header 6 "Cross-lingual GLUE LoRA grid (5 levers x 5 tasks)"
-    for s in "${SEEDS[@]}"; do
-        # Each (lever, task) cell writes its own JSON; the script skips B
-        # internally (placebo, handled in §5.2).
-        log="$LOG_DIR/phase6_seed${s}.log"
-        echo "  [phase 6] seed=$s: full grid (log: $log, live output below)"
-        if ! python scripts/run_xling_glue.py "$(CKPT_PATH "$s")" --seed "$s" \
-                --all_levers --all_tasks 2>&1 | tee "$log"; then
-            echo "  [phase 6] seed=$s FAILED, see $log" >&2
+    phase_header 6 "Cross-lingual GLUE LoRA grid (5 levers x 5 tasks, parallel by N_GPUS waves)"
+
+    # Auto-detect GPU count for waves; one seed per GPU in parallel.
+    if [ -z "${N_GPUS:-}" ]; then
+        if command -v nvidia-smi >/dev/null 2>&1; then
+            N_GPUS=$(nvidia-smi -L | wc -l)
+        else
+            N_GPUS=1
+        fi
+    fi
+    if ! [[ "$N_GPUS" =~ ^[0-9]+$ ]] || [ "$N_GPUS" -lt 1 ]; then
+        echo "ERROR: N_GPUS must be a positive integer (got: '$N_GPUS')." >&2
+        exit 2
+    fi
+    echo "  Parallelism: $N_GPUS GPU(s) per wave"
+
+    i=0
+    total=${#SEEDS[@]}
+    wave_num=0
+    while [ $i -lt "$total" ]; do
+        wave_num=$((wave_num + 1))
+        wave_pids=()
+        wave_seeds=()
+        for ((j=0; j<N_GPUS && (i+j)<total; j++)); do
+            s=${SEEDS[$((i+j))]}
+            gpu=$j
+            log="$LOG_DIR/phase6_seed${s}.log"
+            ckpt=$(CKPT_PATH "$s")
+            echo "  [phase 6 wave $wave_num] seed=$s on GPU $gpu -> $log"
+            CUDA_VISIBLE_DEVICES=$gpu python scripts/run_xling_glue.py \
+                "$ckpt" --seed "$s" --all_levers --all_tasks \
+                > "$log" 2>&1 &
+            wave_pids+=("$!")
+            wave_seeds+=("$s")
+        done
+        fails=0
+        for k in "${!wave_pids[@]}"; do
+            if ! wait "${wave_pids[$k]}"; then
+                echo "  [phase 6] seed=${wave_seeds[$k]} FAILED, see $LOG_DIR/phase6_seed${wave_seeds[$k]}.log" >&2
+                fails=$((fails + 1))
+            fi
+        done
+        if [ $fails -gt 0 ]; then
             exit 1
         fi
+        i=$((i + N_GPUS))
     done
 fi
 
