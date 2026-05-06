@@ -140,8 +140,24 @@ This matches the architecture in MASTER_PLAN.md and fractal-language/CLAUDE.md.
 
 ## Reproducing §4 of the paper (5 seeds, headline results)
 
-One-time setup on the host: `wandb login` (stores the API key in `~/.netrc`,
-which `wandb.init()` picks up automatically). Then:
+One-time setup on the host:
+
+1. `wandb login` (stores the API key in `~/.netrc`; `wandb.init()` reads it).
+2. `huggingface-cli login` (gated datasets: BabyLM corpus, EWoK).
+3. Pre-download the BabyLM eval pipeline data, one-shot:
+   ```
+   cd eval/evaluation-pipeline-2025          # auto-cloned on first phase 4 run
+   osf -p ryjfm clone . && mv osfstorage/evaluation_data . && rmdir osfstorage
+   pip install -r requirements.txt
+   python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+   python evaluation_pipeline/ewok/dl_and_filter.py   # gated; needs HF auth
+   ```
+   The orchestrator wrapper auto-patches the pipeline's
+   `sentence_zero_shot/dataset.py` and `finetune/trainer.py` (AutoProcessor
+   fallback to AutoTokenizer + pad_token resolution) on first run; the patch
+   is idempotent and survives re-clones.
+
+Then:
 
 ```
 bash scripts/run_paper_part1.sh 42 43 44 45 46
@@ -155,6 +171,11 @@ itself if its expected output already exists, so a partial run is resumable.
 `PHASE=N` runs a single phase; `SKIP_PHASES="6"` skips one. Final output:
 `paper_tables.tex` and `paper_tables.md` (Tables 1-3 + §4.1/§4.2 prose).
 
+Phase 6 (cross-lingual GLUE, the heaviest) is parallelised across GPUs in
+waves of `N_GPUS` (auto-detected via `nvidia-smi -L`); each
+`(lever, task)` cell skips if its JSON already exists, so killing and
+restarting is safe.
+
 Per-script entry points (for ad-hoc runs):
 
 | Script | Section | Output |
@@ -166,15 +187,22 @@ Per-script entry points (for ad-hoc runs):
 | `scripts/run_xling_glue.py` | §4.4 Table 3 | `seed{S}_xglue_<lever>_<task>.json` |
 | `scripts/aggregate_paper_tables.py` | tables out | `paper_tables.tex` + `.md` |
 
-External dataset assumptions (override via CLI flags if names differ):
+External dataset sources (override via CLI flags if needed):
 
-- `BaselineQuebec/QFrBLiMP` (1761 minimal pairs, paradigm field)
-- `BaselineQuebec/QFrCoLA` (acceptability judgments + ood split)
-- `BaselineQuebec/glue-fr` (translated GLUE for the D+C lever)
-- `BaselineQuebec/fr_en_seed_dict` (242 verb pairs for BLI)
-
-If your published HF names differ, point each harness at the right dataset
-via `--dataset`, `--fr_dataset`, or `--seed_dict`.
+- QFrBLiMP: raw GitHub URL of `davebulaval/QFrBLiMP/datastore/QFrBLiMP/release/qfrblimp.jsonl`
+  (the `graalul/qfrblimp` HF card declares but does not publish the data).
+  Schema: `sentence_a`, `sentence_b`, `category` (4-bucket label aligned
+  with the paper). 1761 pairs.
+- QFrCoLA: `graalul/qfrcola` (HF). `sentence`, `label`, `category`.
+- BabyLM eval pipeline: cloned from `babylm/evaluation-pipeline-2025`,
+  data from OSF `ryjfm` + EWoK generated locally via the pipeline's
+  `dl_and_filter.py`.
+- Cross-lingual GLUE FR: local files under `submission/glue_fr/{task}.{train,valid}.jsonl`,
+  shipped with the submission. RTE schema diverges (`sentence1/sentence2`
+  vs super_glue's `premise/hypothesis`); the task spec carries
+  `fr_text_a_field`/`fr_text_b_field` overrides.
+- BLI seed dictionary: local `corpus/bilingual/bilingual_lemmas.txt`
+  (73 lemmas → ~242 single-token pairs after Procrustes filtering).
 
 ---
 

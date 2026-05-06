@@ -117,25 +117,44 @@ was about the framing, not the experiment.
 - paper/prior_work/README.md written (points to fractal-language)
 
 ### Not Yet Done (post-submission cleanup)
-- 5-seed run on a 3xRTX-4000-Ada server (waves of 3 then 2)
-- Aggregated paper table from per-seed eval JSONs
-- BabyLM 2026 official eval pipeline integration (clone target: eval/)
 - Tokenizer-ablation harness (the +7.7pp finding in §6.4 of the paper) is
   not in this repo: 16K CDS / 50K Wiki / 50K CDS / 64K CDS sweep was run
   out-of-tree and needs to be reproduced as scripts/run_tokenizer_swap.py
-- QFrBLiMP / QFrCoLA evaluation harness
-- BLI Procrustes alignment script (§5.1 of paper)
-- Cross-lingual GLUE 4-lever grid (§5.2 of paper)
 - §6 negative-result ablations: dict-axioms placebo, EWoK 4 interventions,
   v3 minimal ablation
 
-### Next Immediate Actions
-1. On the 3-GPU server: `bash scripts/cloud_setup.sh` (or local venv install)
-2. `wandb login` once on this host (key lands in `~/.netrc`, no env var)
-3. `bash scripts/run_multi_seed.sh 1 2 3 4 5`  (waves of 3 across GPU 0/1/2)
-4. Clone BabyLM eval pipeline once released
-5. Run eval against each `models/seed{S}/chck_*M/` checkpoint
-6. `python scripts/aggregate_seeds.py 'eval_results/seed*.json' --latex`
+### Done (Session 3, 2026-05-05/06)
+- Phase 1-3 evals: QFrBLiMP per-epoch + best-epoch selection, QFrCoLA
+- Phase 4: BabyLM 2025 suite via shell wrapper that auto-clones the pipeline,
+  patches sentence_zero_shot/dataset.py and finetune/trainer.py for our
+  tokenizer-only checkpoints, harvests results.txt + best_temperature_report.txt
+  by snapshot diff (path, mtime).
+- Phase 5: BLI Procrustes from local corpus/bilingual/bilingual_lemmas.txt.
+- Phase 6: Cross-lingual GLUE LoRA grid (5 levers x 5 tasks). Now parallel
+  across GPUs in waves of N_GPUS, resumable via per-cell skip-if-exists.
+- Phase 7: aggregate_paper_tables.py emits Tables 1-3 + trajectory subtable.
+
+### Operational gotchas captured
+- QFrBLiMP HF dataset card declares qfrblimp.jsonl but doesn't ship it;
+  default fetched from raw GitHub at davebulaval/QFrBLiMP/datastore/.../release/.
+- QFrBLiMP schema: sentence_a / sentence_b / category (4-bucket aligned with
+  the paper). 1761 pairs total.
+- QFrCoLA on graalul/qfrcola: sentence / label / category.
+- BabyLM eval pipeline does not ship eval_blimp.sh etc.; the real entry
+  points are eval_zero_shot.sh and eval_finetuning.sh. Pipeline expects
+  evaluation_data/ from OSF ryjfm and EWoK generated locally via the
+  pipeline's dl_and_filter.py.
+- Pipeline's AutoProcessor.from_pretrained fails on our tokenizer-only
+  checkpoints; we wrap it in a try/except fallback to AutoTokenizer (idempotent
+  post-clone patch in scripts/eval_babylm_suite.py).
+- Pipeline's finetune trainer needs pad_token; same patcher sets it from
+  eos -> bos -> unk -> registers [PAD].
+- train.py now wraps the BPE tokenizer in GPT2TokenizerFast directly so
+  AutoTokenizer can reload it; older checkpoints need their
+  tokenizer_config.json patched (one-shot script in conversation log).
+- Cross-lingual GLUE FR shipped under submission/glue_fr/{task}.{train,valid}.jsonl.
+  RTE schema diverges from super_glue (sentence1/sentence2 vs premise/hypothesis);
+  TaskSpec carries fr_text_a_field/fr_text_b_field overrides for that case.
 
 ---
 
@@ -198,6 +217,19 @@ Use scripts/count_words.py to track budget at every step.
 - Audit-fix on the new code: 5 root-cause bugs fixed and 23 new tests added
   (51 pass + 1 skip when torch missing locally)
 - CLAUDE.md and MEMORIES.md aligned to current code state
+
+### Session 3 (2026-05-05/06, on caribou — 5 seeds full §4 reproduction)
+- Trained 5 seeds (42, 43, 44, 45, 46) x 5 epochs on 91M French words.
+- Wired all eval harnesses to real datasets (graalul/qfrcola, davebulaval
+  GitHub for QFrBLiMP, local files for BLI seed-dict and FR-translated GLUE).
+- Wrote the BabyLM 2025 pipeline wrapper (scripts/eval_babylm_suite.py)
+  that auto-clones, auto-patches, and harvests by snapshot mtime diff.
+- Added phase 6 parallelisation across GPUs and per-cell skip-if-exists for
+  resumable multi-hour runs.
+- Per-language column overrides on TaskSpec (fr_text_a_field/fr_text_b_field)
+  for RTE, where the FR translation uses sentence1/sentence2.
+- One-shot patches for already-saved checkpoints documented in the
+  conversation log (config.json tokenizer_class, tokenizer_config.json fields).
 
 ---
 
