@@ -305,8 +305,13 @@ def table2_bli(eval_dir: Path) -> tuple[str, str]:
                        f"{rnd['p@10'] * 100:.1f}% | - |")
         chance = any_d.get("chance")
         if chance:
-            tex.append(f"Chance & - & {chance['1'] * 100:.1f if isinstance(chance['1'], float) else chance.get(1, 0) * 100:.1f} & "
-                       f"{chance.get(5, 0) * 100:.1f} & {chance.get(10, 0) * 100:.1f} \\\\")
+            # JSON deserialises numeric dict keys as strings, but in-memory
+            # results may carry ints; tolerate both.
+            def _c(k: int) -> float:
+                return float(chance.get(str(k), chance.get(k, 0.0)))
+
+            tex.append(f"Chance & - & {_c(1) * 100:.1f} & "
+                       f"{_c(5) * 100:.1f} & {_c(10) * 100:.1f} \\\\")
     tex.append(r"\bottomrule")
     tex.append(r"\end{tabular}")
 
