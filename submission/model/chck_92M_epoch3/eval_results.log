@@ -1,0 +1,392 @@
+=== QFrBLiMP ===
+Device: cuda
+Loading model: models/chck_92M
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  72%|███████▏  | 107/148 [00:00<00:00, 1007.24it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1119.97it/s]
+Pairs: 1761
+`loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+  200/1761  acc=84.00%
+  400/1761  acc=82.25%
+  600/1761  acc=84.50%
+  800/1761  acc=85.75%
+  1000/1761  acc=86.40%
+  1200/1761  acc=86.50%
+  1400/1761  acc=86.29%
+  1600/1761  acc=86.19%
+
+=== QFrBLiMP RESULTS ===
+  Overall: 1514/1761 = 85.97%
+  anglicism   : 214/267 = 80.15%
+  morphology  : 612/716 = 85.47%
+  semantic    : 347/398 = 87.19%
+  syntax      : 341/380 = 89.74%
+
+=== QFrCoLA ===
+Device: cuda
+Train 15846  Dev 1761  Test 7546
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 6676.46it/s]
+The new embeddings will be initialized from a multivariate normal distribution that has old embeddings' mean and covariance. As described in this article: https://nlp.stanford.edu/~johnhew/vocab-expansion.html. To disable this, use `mean_resizing=False`
+  ep1 step 50/991  loss=0.7608
+  ep1 step 100/991  loss=0.6301
+  ep1 step 150/991  loss=0.6378
+  ep1 step 200/991  loss=0.6368
+  ep1 step 250/991  loss=0.6152
+  ep1 step 300/991  loss=0.6221
+  ep1 step 350/991  loss=0.6230
+  ep1 step 400/991  loss=0.6323
+  ep1 step 450/991  loss=0.6117
+  ep1 step 500/991  loss=0.6345
+  ep1 step 550/991  loss=0.6193
+  ep1 step 600/991  loss=0.6032
+  ep1 step 650/991  loss=0.6085
+  ep1 step 700/991  loss=0.6059
+  ep1 step 750/991  loss=0.6203
+  ep1 step 800/991  loss=0.6199
+  ep1 step 850/991  loss=0.6210
+  ep1 step 900/991  loss=0.6292
+  ep1 step 950/991  loss=0.6032
+Epoch 1 DEV  acc=69.96%  MCC=0.0977
+  -> New best. TEST acc=69.60%  MCC=0.0731
+  ep2 step 50/991  loss=0.5998
+  ep2 step 100/991  loss=0.5736
+  ep2 step 150/991  loss=0.5622
+  ep2 step 200/991  loss=0.5623
+  ep2 step 250/991  loss=0.5932
+  ep2 step 300/991  loss=0.5481
+  ep2 step 350/991  loss=0.5932
+  ep2 step 400/991  loss=0.5290
+  ep2 step 450/991  loss=0.5799
+  ep2 step 500/991  loss=0.5583
+  ep2 step 550/991  loss=0.5551
+  ep2 step 600/991  loss=0.5507
+  ep2 step 650/991  loss=0.5563
+  ep2 step 700/991  loss=0.5481
+  ep2 step 750/991  loss=0.5754
+  ep2 step 800/991  loss=0.5756
+  ep2 step 850/991  loss=0.5457
+  ep2 step 900/991  loss=0.5498
+  ep2 step 950/991  loss=0.5659
+Epoch 2 DEV  acc=72.69%  MCC=0.2554
+  -> New best. TEST acc=72.18%  MCC=0.2368
+  ep3 step 50/991  loss=0.4587
+  ep3 step 100/991  loss=0.4666
+  ep3 step 150/991  loss=0.5018
+  ep3 step 200/991  loss=0.4750
+  ep3 step 250/991  loss=0.4983
+  ep3 step 300/991  loss=0.4846
+  ep3 step 350/991  loss=0.5024
+  ep3 step 400/991  loss=0.4355
+  ep3 step 450/991  loss=0.4680
+  ep3 step 500/991  loss=0.4769
+  ep3 step 550/991  loss=0.4411
+  ep3 step 600/991  loss=0.4997
+  ep3 step 650/991  loss=0.4848
+  ep3 step 700/991  loss=0.4649
+  ep3 step 750/991  loss=0.4770
+  ep3 step 800/991  loss=0.4341
+  ep3 step 850/991  loss=0.4673
+  ep3 step 900/991  loss=0.4447
+  ep3 step 950/991  loss=0.4670
+Epoch 3 DEV  acc=72.86%  MCC=0.2850
+  -> New best. TEST acc=71.92%  MCC=0.2512
+
+=== QFrCoLA FINE-TUNED FINAL ===
+  N: 7546
+  Accuracy: 71.92%
+  MCC: 0.2512
+  TP=4773  TN=654  FP=1648  FN=471
+  Best dev MCC: 0.2850
+
+=== GLUE LoRA ===
+Device: cuda
+Model: models/chck_92M
+
+=== boolq (LoRA) ===
+  train 9427  valid 1635
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 6024.49it/s]
+/usr/local/lib/python3.11/dist-packages/peft/tuners/lora/layer.py:2285: UserWarning: fan_in_fan_out is set to False but the target module is `Conv1D`. Setting fan_in_fan_out to True.
+  warnings.warn(
+The new embeddings will be initialized from a multivariate normal distribution that has old embeddings' mean and covariance. As described in this article: https://nlp.stanford.edu/~johnhew/vocab-expansion.html. To disable this, use `mean_resizing=False`
+  trainable params: 812,546 / 124,662,530 (0.65%)
+    ep1 step 100/590  loss=0.7403
+    ep1 step 200/590  loss=0.6885
+    ep1 step 300/590  loss=0.6839
+    ep1 step 400/590  loss=0.6639
+    ep1 step 500/590  loss=0.6767
+  epoch 1 valid acc=59.33%
+/usr/local/lib/python3.11/dist-packages/peft/utils/save_and_load.py:309: UserWarning: Setting `save_embedding_layers` to `True` as the embedding layer has been resized during finetuning.
+  warnings.warn(
+    ep2 step 100/590  loss=0.6432
+    ep2 step 200/590  loss=0.6390
+    ep2 step 300/590  loss=0.6327
+    ep2 step 400/590  loss=0.6419
+    ep2 step 500/590  loss=0.6232
+  epoch 2 valid acc=64.59%
+    ep3 step 100/590  loss=0.5952
+    ep3 step 200/590  loss=0.5760
+    ep3 step 300/590  loss=0.5834
+    ep3 step 400/590  loss=0.5655
+    ep3 step 500/590  loss=0.5581
+  epoch 3 valid acc=62.26%
+
+=== mnli (LoRA) ===
+  train 10000  valid 4908
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 5965.60it/s]
+  trainable params: 813,315 / 124,663,299 (0.65%)
+    ep1 step 100/625  loss=1.1435
+    ep1 step 200/625  loss=1.1262
+    ep1 step 300/625  loss=1.1186
+    ep1 step 400/625  loss=1.1081
+    ep1 step 500/625  loss=1.1085
+    ep1 step 600/625  loss=1.0915
+  epoch 1 valid acc=39.55%
+    ep2 step 100/625  loss=1.0471
+    ep2 step 200/625  loss=1.0617
+    ep2 step 300/625  loss=1.0427
+    ep2 step 400/625  loss=1.0561
+    ep2 step 500/625  loss=1.0390
+    ep2 step 600/625  loss=1.0301
+  epoch 2 valid acc=44.42%
+    ep3 step 100/625  loss=1.0132
+    ep3 step 200/625  loss=1.0054
+    ep3 step 300/625  loss=1.0042
+    ep3 step 400/625  loss=0.9909
+    ep3 step 500/625  loss=0.9919
+    ep3 step 600/625  loss=0.9892
+  epoch 3 valid acc=44.76%
+
+=== mrpc (LoRA) ===
+  train 3668  valid 204
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 6201.74it/s]
+  trainable params: 812,546 / 124,662,530 (0.65%)
+    ep1 step 100/230  loss=0.6384
+    ep1 step 200/230  loss=0.6391
+  epoch 1 valid acc=70.10%
+    ep2 step 100/230  loss=0.5992
+    ep2 step 200/230  loss=0.5932
+  epoch 2 valid acc=66.18%
+    ep3 step 100/230  loss=0.5571
+    ep3 step 200/230  loss=0.5632
+  epoch 3 valid acc=69.12%
+
+=== multirc (LoRA) ===
+  train 27243  valid 2424
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 6528.31it/s]
+  trainable params: 812,546 / 124,662,530 (0.65%)
+    ep1 step 100/1703  loss=0.7460
+    ep1 step 200/1703  loss=0.7225
+    ep1 step 300/1703  loss=0.7164
+    ep1 step 400/1703  loss=0.6918
+    ep1 step 500/1703  loss=0.7014
+    ep1 step 600/1703  loss=0.6959
+    ep1 step 700/1703  loss=0.6917
+    ep1 step 800/1703  loss=0.6956
+    ep1 step 900/1703  loss=0.6904
+    ep1 step 1000/1703  loss=0.6824
+    ep1 step 1100/1703  loss=0.6893
+    ep1 step 1200/1703  loss=0.6865
+    ep1 step 1300/1703  loss=0.6884
+    ep1 step 1400/1703  loss=0.6858
+    ep1 step 1500/1703  loss=0.6881
+    ep1 step 1600/1703  loss=0.6830
+    ep1 step 1700/1703  loss=0.6913
+  epoch 1 valid acc=57.55%
+    ep2 step 100/1703  loss=0.6783
+    ep2 step 200/1703  loss=0.6823
+    ep2 step 300/1703  loss=0.6865
+    ep2 step 400/1703  loss=0.6878
+    ep2 step 500/1703  loss=0.6771
+    ep2 step 600/1703  loss=0.6913
+    ep2 step 700/1703  loss=0.6894
+    ep2 step 800/1703  loss=0.6807
+    ep2 step 900/1703  loss=0.6797
+    ep2 step 1000/1703  loss=0.6775
+    ep2 step 1100/1703  loss=0.6812
+    ep2 step 1200/1703  loss=0.6801
+    ep2 step 1300/1703  loss=0.6761
+    ep2 step 1400/1703  loss=0.6851
+    ep2 step 1500/1703  loss=0.6778
+    ep2 step 1600/1703  loss=0.6790
+    ep2 step 1700/1703  loss=0.6806
+  epoch 2 valid acc=52.31%
+    ep3 step 100/1703  loss=0.6705
+    ep3 step 200/1703  loss=0.6741
+    ep3 step 300/1703  loss=0.6671
+    ep3 step 400/1703  loss=0.6866
+    ep3 step 500/1703  loss=0.6777
+    ep3 step 600/1703  loss=0.6746
+    ep3 step 700/1703  loss=0.6766
+    ep3 step 800/1703  loss=0.6782
+    ep3 step 900/1703  loss=0.6773
+    ep3 step 1000/1703  loss=0.6737
+    ep3 step 1100/1703  loss=0.6704
+    ep3 step 1200/1703  loss=0.6689
+    ep3 step 1300/1703  loss=0.6781
+    ep3 step 1400/1703  loss=0.6737
+    ep3 step 1500/1703  loss=0.6735
+    ep3 step 1600/1703  loss=0.6692
+    ep3 step 1700/1703  loss=0.6802
+  epoch 3 valid acc=56.85%
+
+=== qqp (LoRA) ===
+  train 10000  valid 20215
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  74%|███████▎  | 109/148 [00:00<00:00, 1077.86it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1115.87it/s]
+  trainable params: 812,546 / 124,662,530 (0.65%)
+    ep1 step 100/625  loss=0.6917
+    ep1 step 200/625  loss=0.6456
+    ep1 step 300/625  loss=0.6405
+    ep1 step 400/625  loss=0.6131
+    ep1 step 500/625  loss=0.5978
+    ep1 step 600/625  loss=0.6197
+  epoch 1 valid acc=68.24%
+    ep2 step 100/625  loss=0.5688
+    ep2 step 200/625  loss=0.5614
+    ep2 step 300/625  loss=0.5335
+    ep2 step 400/625  loss=0.5402
+    ep2 step 500/625  loss=0.5659
+    ep2 step 600/625  loss=0.5286
+  epoch 2 valid acc=69.81%
+    ep3 step 100/625  loss=0.4896
+    ep3 step 200/625  loss=0.4878
+    ep3 step 300/625  loss=0.5005
+    ep3 step 400/625  loss=0.4878
+    ep3 step 500/625  loss=0.4813
+    ep3 step 600/625  loss=0.4905
+  epoch 3 valid acc=72.79%
+
+=== rte (LoRA) ===
+  train 2490  valid 139
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  79%|███████▉  | 117/148 [00:00<00:00, 1127.74it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1218.62it/s]
+  trainable params: 812,546 / 124,662,530 (0.65%)
+    ep1 step 100/156  loss=0.7169
+  epoch 1 valid acc=53.24%
+    ep2 step 100/156  loss=0.6942
+  epoch 2 valid acc=53.24%
+    ep3 step 100/156  loss=0.6692
+  epoch 3 valid acc=51.08%
+
+=== wsc (LoRA) ===
+  train 554  valid 52
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 7940.20it/s]
+  trainable params: 812,546 / 124,662,530 (0.65%)
+  epoch 1 valid acc=48.08%
+  epoch 2 valid acc=48.08%
+  epoch 3 valid acc=55.77%
+
+=== GLUE LoRA RESULTS (models/chck_92M) ===
+  boolq       64.59%
+  mnli        44.76%
+  mrpc        70.10%
+  multirc     57.55%
+  qqp         72.79%
+  rte         53.24%
+  wsc         55.77%
+  mean        59.83%
+
+=== BLiMP + supplement ===
+Device: cuda
+Loading models/chck_92M...
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 5384.87it/s]
+
+=== BLiMP (eval/evaluation-pipeline-2025/evaluation_data/fast_eval/blimp_fast_improved) ===
+`loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+  Overall: 5790/7600 = 76.18%
+  anaphor_gender_agreement                                     90/200 = 45.00%
+  anaphor_number_agreement                                     147/200 = 73.50%
+  animate_subject_trans                                        161/200 = 80.50%
+  coordinate_structure_constraint_complex_left_branch          171/200 = 85.50%
+  coordinate_structure_constraint_object_extraction            113/200 = 56.50%
+  determiner_noun_agreement_1                                  187/200 = 93.50%
+  determiner_noun_agreement_2                                  200/200 = 100.00%
+  determiner_noun_agreement_irregular_1                        172/200 = 86.00%
+  determiner_noun_agreement_with_adj_2                         198/200 = 99.00%
+  distractor_agreement_relative_clause                         161/200 = 80.50%
+  ellipsis_n_bar_1                                             154/200 = 77.00%
+  expletive_it_object_raising                                  141/200 = 70.50%
+  inchoative                                                   157/200 = 78.50%
+  intransitive                                                 147/200 = 73.50%
+  irregular_past_participle_adjectives                         169/200 = 84.50%
+  irregular_past_participle_verbs                              150/200 = 75.00%
+  irregular_plural_subject_verb_agreement_1                    173/200 = 86.50%
+  irregular_plural_subject_verb_agreement_2                    174/200 = 87.00%
+  left_branch_island_simple_question                           184/200 = 92.00%
+  matrix_question_npi_licensor_present                         162/200 = 81.00%
+  npi_present_1                                                146/200 = 73.00%
+  only_npi_scope                                               195/200 = 97.50%
+  passive_1                                                    149/200 = 74.50%
+  principle_A_case_1                                           91/200 = 45.50%
+  principle_A_case_2                                           164/200 = 82.00%
+  principle_A_domain_3                                         96/200 = 48.00%
+  principle_A_reconstruction                                   92/200 = 46.00%
+  sentential_negation_npi_licensor_present                     200/200 = 100.00%
+  sentential_subject_island                                    147/200 = 73.50%
+  superlative_quantifiers_2                                    149/200 = 74.50%
+  tough_vs_raising_1                                           133/200 = 66.50%
+  tough_vs_raising_2                                           111/200 = 55.50%
+  transitive                                                   135/200 = 67.50%
+  wh_island                                                    182/200 = 91.00%
+  wh_questions_subject_gap                                     151/200 = 75.50%
+  wh_questions_subject_gap_long_distance                       185/200 = 92.50%
+  wh_vs_that_no_gap_long_distance                              170/200 = 85.00%
+  wh_vs_that_with_gap_long_distance                            83/200 = 41.50%
+
+=== BLiMP supplement (eval/evaluation-pipeline-2025/evaluation_data/fast_eval/supplement_fast_improved) ===
+  Overall: 241/250 = 96.40%
+  hypernym                                                     50/50 = 100.00%
+  qa_congruence_easy                                           50/50 = 100.00%
+  qa_congruence_tricky                                         50/50 = 100.00%
+  subject_aux_inversion                                        41/50 = 82.00%
+  turn_taking                                                  50/50 = 100.00%
+
+=== EWoK ===
+Device: cuda
+Loading model: models/chck_92M
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 5246.47it/s]
+Domains: 11
+`loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+  agent-properties          101/200 = 50.50%
+  material-dynamics         112/200 = 56.00%
+  material-properties       99/200 = 49.50%
+  physical-dynamics         120/200 = 60.00%
+  physical-interactions     101/200 = 50.50%
+  physical-relations        102/200 = 51.00%
+  quantitative-properties   111/200 = 55.50%
+  social-interactions       104/200 = 52.00%
+  social-properties         105/200 = 52.50%
+  social-relations          103/200 = 51.50%
+  spatial-relations         109/200 = 54.50%
+
+=== EWoK FR RESULTS ===
+  Overall: 1167/2200 = 53.05%
+  agent-properties          50.50%
+  material-dynamics         56.00%
+  material-properties       49.50%
+  physical-dynamics         60.00%
+  physical-interactions     50.50%
+  physical-relations        51.00%
+  quantitative-properties   55.50%
+  social-interactions       52.00%
+  social-properties         52.50%
+  social-relations          51.50%
+  spatial-relations         54.50%
+
+=== Entity Tracking ===
+Device: cuda
+Loading models/chck_92M...
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 5994.29it/s]
+Items: 980
+`loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+  100/980  acc=26.00%
+  200/980  acc=23.00%
+  300/980  acc=20.67%
+  400/980  acc=19.75%
+  500/980  acc=18.00%
+  600/980  acc=17.83%
+  700/980  acc=17.86%
+  800/980  acc=17.25%
+  900/980  acc=18.11%
+
+=== Entity Tracking FR RESULTS ===
+  Overall: 176/980 = 17.96%
+  Chance:  20.00%
+  numops=0: 108/606 = 17.82%
+  numops=1: 68/374 = 18.18%

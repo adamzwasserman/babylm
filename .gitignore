@@ -46,3 +46,10 @@ paper/*.synctex.gz
 !corpus/bilingual/bilingual_lemmas.txt
 !corpus/bilingual/bilingual_metadata.json
 !corpus/babylm_fra/oracle_comparison.json
+
+# Large model artifacts (authoritative copies on HuggingFace Hub)
+submission/model/**/*.safetensors
+submission/model/**/tokenizer.json
+
+# Local AI session context (per workspace convention)
+.agents.md
