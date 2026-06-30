@@ -37,7 +37,7 @@
 
 \begin{abstract}
 We submit MéTRON-FR, a 125M GPT-2 pretrained on 92.50M words of French, to the BabyLM 2026 Strict track. It scores $85.97 \pm 0.17$\% on QFrBLiMP and $62.80$\% on the BabyLM-weighted leaderboard. 
-A cross-lingual GLUE protocol that combines French task-data translation with rank-16 LoRA produces a sharp task-type gradient: relational tasks gain measurably, while world-knowledge tasks regress. Bilingual Lexicon Induction aligns the French embeddings to GPT-2 at p@1 = $68.84 \pm 8.61$\%, $32\times$ above chance, suggesting cross-lingual alignment tracks acquired grammatical competence rather than training duration. 
+A cross-lingual GLUE protocol that combines French task-data translation with rank-16 LoRA produces a sharp task-type gradient: relational tasks gain measurably, while world-knowledge tasks regress. Bilingual Lexicon Induction aligns the French embeddings to GPT-2 at p@1 = $68.84 \pm 8.61$\%, $18\times$ above chance, suggesting cross-lingual alignment tracks acquired grammatical competence rather than training duration. 
 An ablation study shows that single-token zero-shot scoring is dominated by tokenizer and template artifacts at the child scale, motivating tokenizer-swap sensitivity, placebo-controlled prompting, and native-language minimal-pair benchmarks as standard diagnostics.
 \end{abstract}
 
