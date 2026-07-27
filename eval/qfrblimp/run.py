@@ -100,8 +100,17 @@ def evaluate(checkpoint: str, dataset_name: str, seed: int | None,
 
     correct_per_paradigm: dict[str, list[bool]] = defaultdict(list)
     for i, row in enumerate(ds):
-        good = row[good_field]
-        bad = row[bad_field]
+        # The QFrBLiMP GitHub release stores each minimal pair as sentence_a /
+        # sentence_b whose grammatical orientation is NOT fixed: the `label`
+        # field selects the grammatical member (0.0 -> sentence_a is correct,
+        # 1.0 -> sentence_b is correct). The older graalul release used
+        # self-orienting sentence_good / sentence_bad and carries no `label`, so
+        # fall back to good_field / bad_field when `label` is absent.
+        if "label" in row:
+            a, b = row["sentence_a"], row["sentence_b"]
+            good, bad = (b, a) if float(row["label"]) == 1.0 else (a, b)
+        else:
+            good, bad = row[good_field], row[bad_field]
         paradigm = row[paradigm_field]
         s_good = sentence_loglikelihood(model, tokenizer, good, device)
         s_bad = sentence_loglikelihood(model, tokenizer, bad, device)
