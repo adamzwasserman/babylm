@@ -61,9 +61,12 @@ def test_next_ckpt_idx_real_schedule():
     # 92M (the leaderboard checkpoint size) sits between 90M and 100M
     idx = cs.compute_next_ckpt_idx(92_000_000, real)
     assert real[idx] == 100_000_000
-    # 100M and beyond: no more saves
-    assert cs.compute_next_ckpt_idx(100_000_000, real) == len(real)
-    assert cs.compute_next_ckpt_idx(200_000_000, real) == len(real)
+    # Past 100M the schedule now continues on the 2026 hundred-million grid:
+    # exposure just over 100M targets 200M next, and just over 200M targets 300M.
+    assert real[cs.compute_next_ckpt_idx(100_000_000, real)] == 200_000_000
+    assert real[cs.compute_next_ckpt_idx(200_000_000, real)] == 300_000_000
+    # 1000M is the last milestone; at or beyond it, no more saves.
+    assert cs.compute_next_ckpt_idx(1_000_000_000, real) == len(real)
 
 
 def test_real_schedule_is_strictly_monotonic():
