@@ -8,7 +8,9 @@ top of the GPT-2-style French model and report:
     - in-domain test accuracy
     - in-domain test Matthews Correlation Coefficient (MCC, the standard
       metric for binary acceptability under class imbalance)
-    - in-domain dev MCC (for early-stopping picking)
+    - in-domain dev accuracy and MCC, reported for monitoring only: the run
+      trains a fixed number of epochs with save_strategy="no", so no
+      checkpoint is selected on dev and there is no early stopping
     - out-of-domain accuracy and MCC
 
 Usage:

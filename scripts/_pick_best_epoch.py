@@ -31,6 +31,11 @@ from pathlib import Path
 
 EPOCH_RE = re.compile(r"_epoch(\d+)\.json$")
 
+# Minimum accuracy gap between the best and the runner-up epoch for the pick to
+# count as a peak rather than a plateau. 0.005 (0.5pp) is a heuristic floor: the
+# binomial standard error on QFrBLiMP's 1761 items is already ~0.008 at p=0.86.
+DEFAULT_MIN_MARGIN = 0.005
+
 
 def _project_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -46,7 +51,10 @@ def per_epoch_files(seed: int, eval_dir: Path) -> list[tuple[int, Path]]:
 
 
 def epoch_ckpt_dir(seed: int, epoch: int, models_dir: Path) -> Path:
-    candidates = list(models_dir.glob(f"seed{seed}/chck_*M_epoch{epoch}"))
+    # sorted(): Path.glob yields in filesystem order, so an unsorted list would
+    # make the "pick the first candidate" branch below resolve differently on
+    # two machines holding the same checkpoints.
+    candidates = sorted(models_dir.glob(f"seed{seed}/chck_*M_epoch{epoch}"))
     candidates = [c for c in candidates if c.is_dir()]
     if not candidates:
         raise FileNotFoundError(
@@ -60,7 +68,8 @@ def epoch_ckpt_dir(seed: int, epoch: int, models_dir: Path) -> Path:
     return candidates[0]
 
 
-def pick(seed: int, metric: str, eval_dir: Path, models_dir: Path) -> dict:
+def pick(seed: int, metric: str, eval_dir: Path, models_dir: Path,
+         min_margin: float = DEFAULT_MIN_MARGIN) -> dict:
     files = per_epoch_files(seed, eval_dir)
     if not files:
         raise SystemExit(
@@ -76,10 +85,25 @@ def pick(seed: int, metric: str, eval_dir: Path, models_dir: Path) -> dict:
             raise SystemExit(f"{path} has no '{metric}' field")
         trajectory.append({"epoch": epoch, metric: score, "file": str(path)})
 
-    best = max(trajectory, key=lambda t: t[metric])
+    # Ties resolve to the earliest epoch: sort by score desc, epoch asc.
+    ranked = sorted(trajectory, key=lambda t: (-t[metric], t["epoch"]))
+    best = ranked[0]
     best_epoch = best["epoch"]
     best_file = Path(best["file"])
     best_ckpt = epoch_ckpt_dir(seed, best_epoch, models_dir)
+
+    # An argmax over epochs is only meaningful if the epochs are actually
+    # separated. On QFrBLiMP (n=1761) the binomial standard error alone is
+    # ~0.8pp, so a "peak" that beats the runner-up by less than min_margin is
+    # a coin flip dressed up as a selection. Report it rather than let the
+    # downstream table present it as an empirically located peak.
+    margin = (best[metric] - ranked[1][metric]) if len(ranked) > 1 else None
+    spread = max(t[metric] for t in trajectory) - min(t[metric] for t in trajectory)
+    peak_is_separated = margin is None or margin >= min_margin
+    if not peak_is_separated:
+        print(f"WARN: seed{seed} epoch {best_epoch} beats epoch {ranked[1]['epoch']} by only"
+              f" {margin:.4f} ({metric}), under the {min_margin:.4f} margin;"
+              " treat this as a plateau, not a peak.", file=sys.stderr)
 
     # Symlink models/seed{S}/best -> chck_NM_epoch{E*}.
     seed_dir = models_dir / f"seed{seed}"
@@ -98,6 +122,10 @@ def pick(seed: int, metric: str, eval_dir: Path, models_dir: Path) -> dict:
         "metric": metric,
         "best_epoch": best_epoch,
         "best_score": best[metric],
+        "runner_up_margin": margin,
+        "epoch_spread": spread,
+        "min_margin": min_margin,
+        "peak_is_separated": peak_is_separated,
         "best_checkpoint": str(best_ckpt),
         "best_link": str(link),
         "canonical_eval_json": str(canonical),
@@ -115,6 +143,9 @@ def main() -> None:
     p.add_argument("--seed", type=int, required=True)
     p.add_argument("--metric", default="overall",
                    help="QFrBLiMP field to argmax over (default: overall)")
+    p.add_argument("--min_margin", type=float, default=DEFAULT_MIN_MARGIN,
+                   help="Gap to the runner-up epoch below which the pick is reported as a "
+                        f"plateau rather than a peak (default: {DEFAULT_MIN_MARGIN})")
     p.add_argument("--eval_dir", default=None)
     p.add_argument("--models_dir", default=None)
     args = p.parse_args()
@@ -123,9 +154,12 @@ def main() -> None:
     eval_dir = Path(args.eval_dir) if args.eval_dir else root / "eval_results"
     models_dir = Path(args.models_dir) if args.models_dir else root / "models"
 
-    summary = pick(args.seed, args.metric, eval_dir, models_dir)
+    summary = pick(args.seed, args.metric, eval_dir, models_dir, args.min_margin)
     print(f"seed={args.seed} best epoch={summary['best_epoch']} "
           f"({args.metric}={summary['best_score']:.4f})")
+    if not summary["peak_is_separated"]:
+        print(f"  plateau: only {summary['runner_up_margin']:.4f} over the runner-up"
+              f" (spread across epochs: {summary['epoch_spread']:.4f})")
     print(f"  symlink : {summary['best_link']} -> {Path(summary['best_checkpoint']).name}")
     print(f"  canonical eval: {summary['canonical_eval_json']}")
     print("  trajectory:")
