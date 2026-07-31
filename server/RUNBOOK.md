@@ -142,6 +142,7 @@ These are follow-ups, not part of this reproduction.
 
 ## Troubleshooting
 
+- **A GPT-2 import or load fails right after install.** `requirements.txt` leaves `transformers` unpinned, and a `transformers` 5.x release can break the GPT-2 loader used here. If you hit this, pin to a 4.x: `pip install "transformers==4.51.3" "tokenizers==0.21.1"`.
 - **`setup.sh` prints WARN on EWoK.** The EWoK subset is gated. Run `huggingface-cli whoami` to confirm you are logged in, and request access to `ewok-core/ewok-core-1.0`. Without it, phase 4 still runs but reports EWoK as unavailable rather than as a null result.
 - **OSF download fails.** `pip install osfclient`, then re-run `server/setup.sh`; it only re-fetches what is missing.
 - **Out-of-memory during training or GLUE.** Lower batch size: `TRAIN_EXTRA="--batch_size 16"` for training; for the GLUE grid, `run_xling_glue.py` accepts `--batch_size 8` (edit is only needed if OOM occurs).
