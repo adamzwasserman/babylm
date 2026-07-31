@@ -2,6 +2,10 @@
 
 This runbook produces two tables for the MÉTRON-FR paper from the five preserved French checkpoints. It is written to be run end to end by an automated agent on a single-GPU server, with no prior context required.
 
+## Context: this completes an existing run, it does not start one
+
+Most of Section 4 is already done. A clean five-seed run has produced Table 1 (QFrBLiMP), the leaderboard suite, QFrCoLA, the new QFrCoRE/QFrCoRT probes, the training-compute numbers, all five BLI runs (Table 2), and a partial Table 3. Those results, with the actual numbers and where the raw files live on the Hugging Face Hub, are in `server/RESULTS.md`; read it first. The five checkpoints and all per-seed result files are public and browsable. What this runbook adds is the compute-heavy remainder: finishing the Table 3 grid (and re-running BLI is included only for completeness, since it is cheap and idempotent). Two smaller items, translated BLiMP and the LoRA-preservation table, have no harness yet and are out of scope here.
+
 ## What you are producing
 
 Five French GPT-2 checkpoints (125M parameters, trained on ~92M words of French) already exist and are published. You will evaluate them, on the epoch-3 checkpoint of each seed, to fill two tables:
