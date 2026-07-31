@@ -11,7 +11,7 @@ It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the 
 1. **Train** five seeded checkpoints (42, 43, 44, 45, 46) -> `models/seed{S}/chck_*M/`
 2. **QFrBLiMP** zero-shot, every epoch -> `eval_results/seed{S}_qfrblimp_epoch{1..5}.json` (Table 1 + the trajectory figure)
 3. **QFrCoLA** fine-tune + MCC -> `eval_results/seed{S}_qfrcola.json`
-4. **BabyLM suite** (BLiMP, BLiMP-Supplement, EWoK, GLUE, GlobalPIQA) -> `eval_results/seed{S}_babylm.json`
+4. **BabyLM suite** -> `eval_results/seed{S}_babylm.json`. Zero-shot: BLiMP, BLiMP-Supplement, EWoK, entity-tracking, wug adjective-nominalization, wug past-tense, COMPS, and reading (eye-tracking / self-paced). Fine-tune: (Super)GLUE (BoolQ, RTE, MRPC, WSC, MNLI, MultiRC, QQP). (GlobalPIQA is not part of this suite; it was a separate leaderboard-submission task and is not a paper table.)
 5. **BLI Procrustes** -> `eval_results/seed{S}_bli_*.json` (Table 2)
 6. **Cross-lingual GLUE grid** (5 levers x 5 tasks) -> `eval_results/seed{S}_xglue_*.json` (Table 3)
 7. **Aggregate** -> `paper_tables.tex` and `paper_tables.md` (mean +/- std across the five seeds)
@@ -37,10 +37,9 @@ git checkout david-reproduction        # this branch; based on main
 
 python -m venv .venv && source .venv/bin/activate
 pip install --upgrade pip
-pip install -r requirements.txt         # if the repo has one; otherwise install:
-pip install "torch==2.7.0" "transformers==4.51.3" "tokenizers==0.21.1" \
-            datasets huggingface_hub "peft>=0.13,<0.16" scikit-learn scipy numpy \
-            wandb osfclient nltk
+pip install -r requirements.txt         # authoritative dependency list (torch, transformers,
+                                        # datasets, peft, scikit-learn, accelerate, spacy, etc.)
+pip install osfclient nltk              # needed by the eval-pipeline setup; not in requirements.txt
 
 huggingface-cli login                   # paste a token; needed for gated EWoK
 
