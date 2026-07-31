@@ -191,8 +191,16 @@ External dataset sources (override via CLI flags if needed):
 
 - QFrBLiMP: raw GitHub URL of `davebulaval/QFrBLiMP/datastore/QFrBLiMP/release/qfrblimp.jsonl`
   (the `graalul/qfrblimp` HF card declares but does not publish the data).
-  Schema: `sentence_a`, `sentence_b`, `category` (4-bucket label aligned
-  with the paper). 1761 pairs.
+  Schema: `sentence_a`, `sentence_b`, `label`, `category`, `type`, `subcat`,
+  plus per-annotator columns. 1761 pairs.
+  **`label` decides which side is grammatical** (0.0 -> `sentence_a`,
+  1.0 -> `sentence_b`; released split 845/916). A scorer that assumes
+  `sentence_a` is always the good sentence is right on the label=0 items and
+  inverted on the label=1 items, which pins any real competence at ~48.5%.
+  `category` (4 values, counts 380/398/716/267) is the paper's bucket level;
+  `type` (20 values) is the fine-grained phenomenon.
+  18 released rows have byte-identical `sentence_a`/`sentence_b`, so the
+  benchmark ceiling is 1743/1761 = 98.98%, not 100%.
 - QFrCoLA: `graalul/qfrcola` (HF). `sentence`, `label`, `category`.
 - BabyLM eval pipeline: cloned from `babylm/evaluation-pipeline-2025`,
   data from OSF `ryjfm` + EWoK generated locally via the pipeline's
