@@ -8,12 +8,12 @@ It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the 
 
 `scripts/run_paper_part1.sh` runs seven phases, each of which skips itself if its output already exists:
 
-1. **Train** five seeded checkpoints (42, 43, 44, 45, 46) -> `models/seed{S}/chck_*M/`
+1. **Train** five seeded checkpoints, five epochs each (42, 43, 44, 45, 46) -> `models/seed{S}/chck_92M_epoch{1..5}/`. The paper's reported model is the epoch-3 checkpoint; phase 2 picks it automatically and links it as `models/seed{S}/best`. See Running for the required `--epochs 5`.
 2. **QFrBLiMP** zero-shot, every epoch -> `eval_results/seed{S}_qfrblimp_epoch{1..5}.json` (Table 1 + the trajectory figure)
 3. **QFrCoLA** fine-tune + MCC -> `eval_results/seed{S}_qfrcola.json`
 4. **BabyLM suite** -> `eval_results/seed{S}_babylm.json`. Zero-shot: BLiMP, BLiMP-Supplement, EWoK, entity-tracking, wug adjective-nominalization, wug past-tense, COMPS, and reading (eye-tracking / self-paced). Fine-tune: (Super)GLUE (BoolQ, RTE, MRPC, WSC, MNLI, MultiRC, QQP). (GlobalPIQA is not part of this suite; it was a separate leaderboard-submission task and is not a paper table.)
 5. **BLI Procrustes** -> `eval_results/seed{S}_bli_*.json` (Table 2)
-6. **Cross-lingual GLUE grid** (5 levers x 5 tasks) -> `eval_results/seed{S}_xglue_*.json` (Table 3)
+6. **Cross-lingual GLUE grid** (5 levers x 5 tasks) -> `eval_results/seed{S}_xglue_*.json` (Table 3). This is frozen-base LoRA: `run_xling_glue.py` wraps the French base in a PEFT adapter and never fine-tunes the base, which is the paper's methodology. (The leaderboard (Super)GLUE inside phase 4 is a different evaluation: it runs the official BabyLM pipeline's full fine-tune, as the leaderboard requires. The two are intentionally not the same procedure.)
 7. **Aggregate** -> `paper_tables.tex` and `paper_tables.md` (mean +/- std across the five seeds)
 
 ## Hardware and time
@@ -23,7 +23,8 @@ It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the 
 
 ## Prerequisites
 
-- Python 3.10 or newer, in a fresh virtual environment.
+- Python 3.11 or newer, in a fresh virtual environment. The repo's `pyproject.toml` declares `requires-python >=3.13`; match 3.13 to the authors' environment if you can.
+- A working C compiler (`build-essential` on Debian/Ubuntu). `scripts/train.py` calls `torch.compile` on CUDA, which builds Triton kernels and fails without one. A normal GPU dev box has this; a minimal container may not.
 - A Hugging Face account with `huggingface-cli login` completed. Needed because the EWoK evaluation subset is gated (request access to `ewok-core/ewok-core-1.0` if you have not before) and, if you choose to upload results, for write access.
 - Outbound access to huggingface.co, github.com, osf.io, and raw.githubusercontent.com.
 - Optional: a Weights & Biases account. If you do not want it, training runs with `--wandb_mode disabled` (see Running).
@@ -85,14 +86,16 @@ Only after all five pass, launch the full run.
 
 ## Running
 
+The paper trains each seed for five epochs and reports the epoch-3 checkpoint (`chck_92M_epoch3`) as the grammatical-competence peak. `scripts/train.py` defaults to a single epoch and the orchestrator does not override it, so you MUST pass `--epochs 5` through `TRAIN_EXTRA`. This is not optional: without it phase 1 trains one epoch, phase 2 produces only an `epoch1` file per seed, the best-epoch pick collapses to epoch 1, and the epoch-3 headline plus the five-epoch QFrBLiMP trajectory can never be built. The run would appear to succeed while reproducing the wrong model.
+
 ```bash
-bash scripts/run_paper_part1.sh 42 43 44 45 46
+TRAIN_EXTRA="--epochs 5" bash scripts/run_paper_part1.sh 42 43 44 45 46
 ```
 
-To run without Weights & Biases:
+To also run without Weights & Biases:
 
 ```bash
-TRAIN_EXTRA="--wandb_mode disabled" bash scripts/run_paper_part1.sh 42 43 44 45 46
+TRAIN_EXTRA="--epochs 5 --wandb_mode disabled" bash scripts/run_paper_part1.sh 42 43 44 45 46
 ```
 
 Useful controls (all optional):
@@ -142,7 +145,10 @@ These are follow-ups, not part of this reproduction.
 
 ## Troubleshooting
 
-- **A GPT-2 import or load fails right after install.** `requirements.txt` leaves `transformers` unpinned, and a `transformers` 5.x release can break the GPT-2 loader used here. If you hit this, pin to a 4.x: `pip install "transformers==4.51.3" "tokenizers==0.21.1"`.
+- **A GPT-2 import or load fails right after install.** `requirements.txt` leaves `transformers` unpinned, so a plain `pip install -r requirements.txt` can pull a much newer major that breaks the GPT-2 loader used here. The BabyLM eval pipeline that `server/setup.sh` installs pins `transformers==4.51.3`, `tokenizers==0.21.1`, `torch==2.7.0` into the same environment, so running `server/setup.sh` before the job usually settles the versions. If a repo script still fails to load the model, pin explicitly: `pip install "transformers==4.51.3" "tokenizers==0.21.1"`.
+- **Training dies before the first step with a compiler or Triton error.** `scripts/train.py` calls `torch.compile` on CUDA and needs a working C compiler to build Triton kernels. Install one (`apt-get install -y build-essential`) and re-run. The pre-flight training smoke exercises `torch.compile`, so it catches this before the full run.
+- **Phase 4 crashes at import with `torchvision::nms does not exist`.** This is a torch/torchvision version mismatch dragged in alongside the eval-pipeline install; the text eval never uses vision. Remove it and re-run the phase: `pip uninstall -y torchvision`.
+- **GLUE fine-tuning fails with "tokenizer does not have a padding token".** This is handled automatically: `scripts/eval_babylm_suite.py` idempotently patches the pipeline's `finetune/trainer.py` to set a `pad_token` (eos, then unk) on first run. If you see this, you invoked a pipeline script directly instead of through the wrapper. Run phase 4 via the orchestrator (or `scripts/eval_babylm_suite.py`) so the patch is applied.
 - **`setup.sh` prints WARN on EWoK.** The EWoK subset is gated. Run `huggingface-cli whoami` to confirm you are logged in, and request access to `ewok-core/ewok-core-1.0`. Without it, phase 4 still runs but reports EWoK as unavailable rather than as a null result.
 - **OSF download fails.** `pip install osfclient`, then re-run `server/setup.sh`; it only re-fetches what is missing.
 - **Out-of-memory during training or GLUE.** Lower batch size: `TRAIN_EXTRA="--batch_size 16"` for training; for the GLUE grid, `run_xling_glue.py` accepts `--batch_size 8` (edit is only needed if OOM occurs).

@@ -57,6 +57,11 @@ if [ ! -d "$PDIR/evaluation_data" ]; then
 fi
 if [ -d "$PDIR" ]; then
   pip install -q -r "$PDIR/requirements.txt" 2>&1 | tail -1
+  # The pipeline install can leave a torchvision built for a different torch,
+  # which makes transformers' AutoProcessor import die on
+  # "torchvision::nms does not exist" and crashes every eval at import time.
+  # The text eval never uses vision, so remove any mismatched torchvision.
+  pip uninstall -y torchvision >/dev/null 2>&1 || true
   python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')" >/dev/null 2>&1 || true
   echo "generating the EWoK subset (gated; needs huggingface-cli login for ewok-core)..."
   python "$PDIR/evaluation_pipeline/ewok/dl_and_filter.py" \
