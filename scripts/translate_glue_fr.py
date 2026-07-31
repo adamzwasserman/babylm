@@ -6,11 +6,11 @@ Usage:
   uv run python scripts/translate_glue_fr.py [--task boolq|rte|multirc|all]
 """
 
-import json
-import os
-from pathlib import Path
-import anthropic
 import argparse
+import json
+from pathlib import Path
+
+import anthropic
 
 GLUE_DIR = Path("eval/evaluation-pipeline-2025/evaluation_data/full_eval/glue_filtered")
 OUT_DIR = Path("eval/evaluation-pipeline-2025/evaluation_data/full_eval/glue_filtered_fr")
@@ -93,8 +93,10 @@ def translate_task(task, split):
     # Translate
     translated = translate_texts(all_texts)
 
-    # Reassemble
-    for (idx, field), trans in zip(field_map, translated):
+    # Reassemble. strict=True: a length mismatch means the translation pass
+    # dropped or duplicated a text, which would silently misalign every
+    # following field against the wrong item.
+    for (idx, field), trans in zip(field_map, translated, strict=True):
         items[idx][field] = trans
 
     # Write
