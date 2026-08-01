@@ -185,11 +185,11 @@ if ! skip_phase 1; then
     phase_header 1 "Training (parallel by N_GPUS waves)"
     need_train=()
     for s in "${SEEDS[@]}"; do
-        # Consider a seed already trained if there is at least one chck_*M
+        # Consider a seed already trained only if the final-epoch checkpoint
         # directory under models/seed{S}/. If you want to force a re-run
         # with more epochs, set FORCE=1 or delete the seed dir.
         if [ -z "${FORCE:-}" ] && \
-           ls -d "models/seed${s}"/chck_*M >/dev/null 2>&1; then
+           ls -d "models/seed${s}"/chck_*M_epoch5 >/dev/null 2>&1; then
             existing=$(resolve_ckpt "$s")
             echo "  seed=$s -> $existing already exists, skipping"
         else
