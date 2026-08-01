@@ -46,7 +46,7 @@ done
 
 echo "==================== [4/4] BabyLM eval-pipeline data (for the suite phase) ===================="
 PDIR="eval/evaluation-pipeline-2025"
-pip install -q osfclient 2>&1 | tail -1
+pip install -q osfclient nltk 2>&1 | tail -1
 if [ ! -d "$PDIR" ]; then
   echo "cloning the BabyLM 2025 evaluation pipeline..."
   git clone --depth 1 https://github.com/babylm/evaluation-pipeline-2025.git "$PDIR" || FAIL=1
