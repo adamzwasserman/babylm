@@ -64,13 +64,22 @@ if [ -d "$PDIR" ]; then
   pip uninstall -y torchvision >/dev/null 2>&1 || true
   python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')" >/dev/null 2>&1 || true
   echo "generating the EWoK subset (gated; needs huggingface-cli login for ewok-core)..."
-  python "$PDIR/evaluation_pipeline/ewok/dl_and_filter.py" \
-    || echo "WARN: EWoK generation failed. Confirm 'huggingface-cli whoami' works and that access to ewok-core/ewok-core-1.0 has been requested/granted. The suite phase will otherwise skip EWoK."
+  if python "$PDIR/evaluation_pipeline/ewok/dl_and_filter.py"; then
+    EWOK_OK=1
+  else
+    EWOK_OK=0
+    echo "WARN: EWoK generation failed. Confirm 'huggingface-cli whoami' works and that access to ewok-core/ewok-core-1.0 has been requested/granted. The suite phase will run without EWoK (the §4.2 EWoK number will be absent)."
+  fi
 fi
 
 echo "==================== summary ===================="
 if [ "$FAIL" = "0" ]; then
   echo "SETUP OK. Next: bash scripts/run_paper_part1.sh 42 43 44 45 46"
+  if [ "${EWOK_OK:-0}" = "1" ]; then
+    echo "  EWoK: generated."
+  else
+    echo "  EWoK: UNAVAILABLE (gated). Required inputs are present and the run can proceed, but the suite will run without EWoK and the §4.2 EWoK number will be missing. Grant access to ewok-core/ewok-core-1.0 and re-run setup to include it."
+  fi
 else
   echo "SETUP INCOMPLETE. Resolve the WARN/MISSING/ERROR lines above before launching the full run."
   exit 1
