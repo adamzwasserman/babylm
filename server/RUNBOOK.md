@@ -49,6 +49,8 @@ bash server/setup.sh                    # corpus + tokenizer + eval-pipeline dat
 
 `server/setup.sh` is idempotent. It downloads the published French corpus to `corpus/final/train_french.txt`, builds the shared 50k tokenizer at `models/tokenizer/`, verifies the GLUE and BLI data that ship in the repo, and clones the BabyLM eval pipeline plus its OSF data for the suite phase. It prints `SETUP OK` only when all inputs are present. Do not proceed past a non-OK result.
 
+**Environment note (transformers version).** The BabyLM eval pipeline pins `transformers==4.51.3`, `tokenizers==0.21.1`, and `torch==2.7.0` into this same virtual environment, so that is the version you reproduce under. The paper's original runs used a newer transformers via a lock file that is not committed here; the difference that moved the reported QFrBLiMP numbers was the scorer correction in PR #26, not the transformers version, so 4.51.3 is the accepted reproduction environment. Do not upgrade transformers to a 5.x release in this venv; the GPT-2 loader used here can break on it.
+
 ## Pre-flight checklist (run BEFORE the long job; each has bitten runs before)
 
 1. **GPU visible to PyTorch:**
