@@ -76,7 +76,7 @@ bash server/setup.sh                    # corpus + tokenizer + eval-pipeline dat
 
 5. **Training smoke, one seed, one epoch, to a throwaway directory.** This exercises the whole training path in a few minutes and catches an environment problem before you commit to the full five-model run:
    ```bash
-   head -c 5000000 corpus/final/train_french.txt > /tmp/smoke_corpus.txt
+   head -n 20000 corpus/final/train_french.txt > /tmp/smoke_corpus.txt
    python scripts/train.py --seed 99 --epochs 1 --corpus /tmp/smoke_corpus.txt \
      --tokenizer_dir models/tokenizer --output_dir /tmp/train_smoke --wandb_mode disabled
    ls /tmp/train_smoke/chck_*_epoch1/config.json && echo "TRAIN SMOKE OK"
