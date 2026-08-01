@@ -226,7 +226,8 @@ def compute_metrics_factory(spec: TaskSpec):
 def run_one_cell(checkpoint: str, lever: str, task: str, seed: int | None,
                  batch_size: int, lr: float, max_length: int,
                  fr_dataset_override: str | None,
-                 fr_subset_override: str | None) -> dict:
+                 fr_subset_override: str | None,
+                 max_train: int | None = None) -> dict:
     spec = TASK_SPECS[task]
     lspec = LEVER_SPECS[lever]
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -270,6 +271,9 @@ def run_one_cell(checkpoint: str, lever: str, task: str, seed: int | None,
         spec, lspec.train_data_language, train_split,
         fr_dataset_override, fr_subset_override,
     )
+    if max_train is not None and len(train_raw) > max_train:
+        train_raw = train_raw.shuffle(seed=seed_arg).select(range(max_train))
+        print(f"  subsampled train to {max_train} examples (fine-tuning-scale control)")
     print(f"Loading {task} eval ({lspec.eval_data_language})...")
     val_raw = load_task_split(
         spec, lspec.eval_data_language, val_split,
@@ -338,6 +342,7 @@ def run_one_cell(checkpoint: str, lever: str, task: str, seed: int | None,
             {"rank": lspec.rank, "alpha": lspec.alpha, "epochs": lspec.epochs}
             if lspec.rank is not None else None
         ),
+        "max_train": max_train,
         "train_data_language": lspec.train_data_language,
         "eval_data_language": lspec.eval_data_language,
     }
@@ -362,6 +367,8 @@ def main() -> None:
                         "(applies to all tasks)")
     p.add_argument("--fr_subset", default=None,
                    help="Override the HF subset used for French task data")
+    p.add_argument("--max_train", type=int, default=None,
+                   help="cap training examples (e.g. 3000 for the MNLI fine-tuning-scale control)")
     p.add_argument("--output_dir", default=None)
     args = p.parse_args()
 
@@ -378,7 +385,8 @@ def main() -> None:
 
     for lever in levers:
         for task in tasks:
-            out_path = out_dir / f"{seed_tag}_xglue_{lever.replace('+', '')}_{task}.json"
+            _sfx = f"_max{args.max_train}" if args.max_train else ""
+            out_path = out_dir / f"{seed_tag}_xglue_{lever.replace('+', '')}_{task}{_sfx}.json"
             if out_path.exists() and not args.force:
                 print(f"\n=== {seed_tag} | lever={lever} | task={task} === SKIP "
                       f"({out_path.name} exists; pass --force to redo)")
@@ -387,7 +395,7 @@ def main() -> None:
             res = run_one_cell(
                 args.checkpoint, lever, task, args.seed,
                 args.batch_size, args.lr, args.max_length,
-                args.fr_dataset, args.fr_subset,
+                args.fr_dataset, args.fr_subset, args.max_train,
             )
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(res, f, indent=2, ensure_ascii=False)
