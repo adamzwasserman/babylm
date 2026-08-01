@@ -38,12 +38,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 PIPELINE_REPO_URL = "https://github.com/babylm/evaluation-pipeline-2025.git"
 PIPELINE_DIR_NAME = "evaluation-pipeline-2025"
+# Pin to the exact commit this reproduction was validated against. The
+# pipeline's main branch is unstable and the string-literal patch in
+# _patch_dataset_autoprocessor only WARNs (does not abort) if its target
+# has drifted, so an unpinned main can silently break the suite. Keep this
+# in sync with the PIPELINE_PIN in server/setup.sh.
+PIPELINE_PIN = "bf55c1131e53654c2a87418f5629c26959acd710"
 
 
 def _project_root() -> Path:
@@ -141,11 +148,26 @@ def ensure_pipeline_cloned() -> Path:
     target = _pipeline_dir()
     if not target.exists():
         target.parent.mkdir(parents=True, exist_ok=True)
-        print(f"Cloning {PIPELINE_REPO_URL} into {target}...")
-        subprocess.run(
-            ["git", "clone", "--depth", "1", PIPELINE_REPO_URL, str(target)],
-            check=True,
-        )
+        print(f"Cloning {PIPELINE_REPO_URL} at {PIPELINE_PIN} into {target}...")
+        # Shallow fetch-by-SHA: stays --depth 1 but deterministic at the pin.
+        target.mkdir(parents=True, exist_ok=True)
+        try:
+            subprocess.run(["git", "-C", str(target), "init", "-q"], check=True)
+            subprocess.run(
+                ["git", "-C", str(target), "remote", "add", "origin", PIPELINE_REPO_URL],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(target), "fetch", "-q", "--depth", "1", "origin", PIPELINE_PIN],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(target), "checkout", "-q", "FETCH_HEAD"],
+                check=True,
+            )
+        except subprocess.CalledProcessError:
+            shutil.rmtree(target, ignore_errors=True)
+            raise
     _patch_dataset_autoprocessor(target)
     return target
 

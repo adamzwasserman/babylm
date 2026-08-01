@@ -52,8 +52,18 @@ echo "==================== [4/4] BabyLM eval-pipeline data (for the suite phase)
 PDIR="eval/evaluation-pipeline-2025"
 pip install -q osfclient nltk 2>&1 | tail -1
 if [ ! -d "$PDIR" ]; then
-  echo "cloning the BabyLM 2025 evaluation pipeline..."
-  git clone --depth 1 https://github.com/babylm/evaluation-pipeline-2025.git "$PDIR" || FAIL=1
+  # Pin to the exact pipeline commit this reproduction was validated against.
+  # The pipeline's main branch is unstable; the string-literal patches applied
+  # by scripts/eval_babylm_suite.py only WARN (they do not abort) if the code
+  # they target has drifted, so an unpinned main can silently break phase 4.
+  # Shallow fetch-by-SHA keeps the checkout at --depth 1 and deterministic.
+  PIPELINE_PIN="bf55c1131e53654c2a87418f5629c26959acd710"
+  echo "cloning the BabyLM 2025 evaluation pipeline (pinned $PIPELINE_PIN)..."
+  ( mkdir -p "$PDIR" \
+    && git -C "$PDIR" init -q \
+    && git -C "$PDIR" remote add origin https://github.com/babylm/evaluation-pipeline-2025.git \
+    && git -C "$PDIR" fetch -q --depth 1 origin "$PIPELINE_PIN" \
+    && git -C "$PDIR" checkout -q FETCH_HEAD ) || { echo "ERROR: pinned pipeline checkout failed" >&2; rm -rf "$PDIR"; FAIL=1; }
 fi
 if [ ! -d "$PDIR/evaluation_data" ]; then
   echo "downloading evaluation_data from OSF (project ryjfm)..."
