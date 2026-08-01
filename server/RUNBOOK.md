@@ -1,6 +1,6 @@
 # Runbook: full MÉTRON-FR §4 reproduction from scratch
 
-This runbook reproduces all of Section 4 of the MÉTRON-FR paper from scratch on a single server: it trains the five seeded French models and runs every evaluation, ending in the paper's Tables 1 to 3, the leaderboard suite, and the compute numbers. It is written to be executed end to end by an automated agent with no prior context. Follow it in order. Do not skip the pre-flight.
+This runbook reproduces all of Section 4 of the MÉTRON-FR paper from scratch on a single server: it trains the five seeded French models and runs every evaluation, ending in the paper's Tables 1 to 3 and the leaderboard suite. It is written to be executed end to end by an automated agent with no prior context. Follow it in order. Do not skip the pre-flight.
 
 It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the `main` branch, so every number uses the current, tested evaluation code (including the corrected QFrBLiMP scorer merged in PR #26).
 
@@ -19,12 +19,12 @@ It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the 
 ## Hardware and time
 
 - One or more CUDA GPUs. Training and the GLUE grid parallelise across all visible GPUs in waves; more GPUs is faster, one GPU works. The model is 125M parameters, so a 16 to 24 GB card is enough.
-- Wall-clock is dominated by training (five models, five epochs each on ~92M words) and by the GLUE grid (125 small fine-tunes). Budget several hours to a day depending on GPU count. The run is fully resumable, so it does not need to finish in one sitting.
+- Wall-clock is dominated by training (five models, five epochs each on ~92M words) and by the GLUE grid (100 small fine-tunes: of the 5-lever x 5-task x 5-seed grid, the 25 lever-B cells are zero-shot stubs that train nothing). Budget several hours to a day depending on GPU count. The run is fully resumable, so it does not need to finish in one sitting.
 - Disk: training keeps every checkpoint it writes. Per seed that is 19 word-cadence checkpoints (1M to 100M words) plus 5 per-epoch checkpoints, each a full ~0.5 GB 125M-parameter model directory, so roughly 12 GB per seed and about 60 GB across the five seeds, before the ~2 GB eval pipeline and its data. Provision at least ~80 GB of free space for `models/` and `eval/`, or the run will die partway through training with no warning.
 
 ## Prerequisites
 
-- Python 3.11 or newer, in a fresh virtual environment. The repo's `pyproject.toml` declares `requires-python >=3.13`; match 3.13 to the authors' environment if you can.
+- Python 3.13 or newer, in a fresh virtual environment (the repo's `pyproject.toml` declares `requires-python >=3.13`).
 - A working C compiler (`build-essential` on Debian/Ubuntu). `scripts/train.py` calls `torch.compile` on CUDA, which builds Triton kernels and fails without one. A normal GPU dev box has this; a minimal container may not.
 - A Hugging Face access token (read scope) in the `HF_TOKEN` environment variable. An autonomous agent must authenticate non-interactively: `huggingface-cli login` on its own blocks on stdin waiting for a pasted token and will hang the run. Exporting `HF_TOKEN` is enough on its own (the `huggingface_hub` client and the setup script both read it), and the setup step below also runs a non-interactive `huggingface-cli login --token` to persist it. Auth is needed because the EWoK evaluation subset is gated (request access to `ewok-core/ewok-core-1.0` first if you have not before) and, if the published corpus dataset is private, to download it.
 - Outbound access to huggingface.co, github.com, osf.io, and raw.githubusercontent.com.

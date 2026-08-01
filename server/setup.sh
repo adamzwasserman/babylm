@@ -40,7 +40,11 @@ fi
 [ -f models/tokenizer/tokenizer.json ] || { echo "ERROR: tokenizer build failed"; FAIL=1; }
 
 echo "==================== [3/4] repo-shipped eval data ===================="
-for f in corpus/bilingual/bilingual_lemmas.txt submission/glue_fr/rte.valid.jsonl submission/glue_fr/boolq.train.jsonl; do
+GLUE_FR=""
+for t in boolq rte mrpc wsc mnli; do
+  GLUE_FR="$GLUE_FR submission/glue_fr/$t.train.jsonl submission/glue_fr/$t.valid.jsonl"
+done
+for f in corpus/bilingual/bilingual_lemmas.txt $GLUE_FR; do
   if [ -f "$f" ]; then echo "present: $f"; else echo "MISSING (wrong branch or bad checkout): $f"; FAIL=1; fi
 done
 
@@ -57,6 +61,9 @@ if [ ! -d "$PDIR/evaluation_data" ]; then
 fi
 if [ -d "$PDIR" ]; then
   pip install -q -r "$PDIR/requirements.txt" 2>&1 | tail -1
+  # guarantee the reproduction pin regardless of what the unpinned repo
+  # requirements pulled; a transformers 5.x breaks the GPT-2 loader used here.
+  pip install -q "transformers==4.51.3" "tokenizers==0.21.1" 2>&1 | tail -1
   # The pipeline install can leave a torchvision built for a different torch,
   # which makes transformers' AutoProcessor import die on
   # "torchvision::nms does not exist" and crashes every eval at import time.
