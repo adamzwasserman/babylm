@@ -6,13 +6,13 @@ These are the additional controls and decisions agreed for the camera-ready revi
 
 **Why.** The CL-GLUE gradient (relational tasks gain, MNLI regresses ~-11pp) is only a *task-type* effect if it is not explained by training-set size. MNLI has ~393k training examples; MRPC ~3.7k, RTE ~2.5k. A frozen-base LoRA can plateau first on the largest task, which would make the MNLI regression a fine-tuning-scale artifact, not a world-knowledge effect.
 
-**What to run.** `run_xling_glue.py` now takes `--max_train N`, which caps and reshuffles the training split (per-seed) and writes to a distinct file (`seed{S}_xglue_{lever}_{task}_max{N}.json`; the `+` in a lever name is stripped, so `D+C` becomes `DC` -> `seed{S}_xglue_DC_{task}_max{N}.json`), so it does not overwrite the full cell. Run the MNLI cell at 3000 (matching the small tasks) for `Baseline` and `D+C`, on both the French checkpoint and the English baseline, across the five seeds. The output filename encodes only seed/lever/task/max, not the model, so the English runs must go to a separate `--output_dir` or they collide with (and are skipped in favour of) the French cells of the same name:
+**What to run.** `run_xling_glue.py` now takes `--max_train N`, which caps and reshuffles the training split (per-seed) and writes to a distinct file (`seed{S}_xglue_{lever}_{task}_max{N}.json`; the `+` in a lever name is stripped, so `D+C` becomes `DC` -> `seed{S}_xglue_DC_{task}_max{N}.json`), so it does not overwrite the full cell. The French checkpoint is `models/seed$S/best` (the symlink phase 2 creates); set `ENGLISH_BASELINE` to the English baseline checkpoint path (see control 2) before running these. Both subsample runs write to their own `--output_dir` (`eval_results/mnli_subsample_fr` and `_en`) so the `_max` files stay out of the base `eval_results/` that the Table-3 aggregator globs. Run the MNLI cell at 3000 (matching the small tasks) for `Baseline` and `D+C`, on both the French checkpoint and the English baseline, across the five seeds. The output filename encodes only seed/lever/task/max, not the model, so the English runs must go to a separate `--output_dir` or they collide with (and are skipped in favour of) the French cells of the same name:
 
 ```bash
 for S in 42 43 44 45 46; do
   for L in Baseline "D+C"; do
-    python scripts/run_xling_glue.py <french_ckpt_seed$S>  --lever "$L" --task mnli --seed $S --max_train 3000 --output_dir eval_results
-    python scripts/run_xling_glue.py <english_baseline>    --lever "$L" --task mnli --seed $S --max_train 3000 --output_dir eval_results/english_baseline
+    python scripts/run_xling_glue.py models/seed$S/best  --lever "$L" --task mnli --seed $S --max_train 3000 --output_dir eval_results/mnli_subsample_fr
+    python scripts/run_xling_glue.py "$ENGLISH_BASELINE"    --lever "$L" --task mnli --seed $S --max_train 3000 --output_dir eval_results/mnli_subsample_en
   done
 done
 ```
@@ -27,7 +27,7 @@ done
 
 ```bash
 for S in 42 43 44 45 46; do
-  python scripts/run_xling_glue.py <english_baseline> --all_levers --all_tasks --seed $S --output_dir eval_results/english_baseline
+  python scripts/run_xling_glue.py "$ENGLISH_BASELINE" --all_levers --all_tasks --seed $S --output_dir eval_results/english_baseline
 done
 ```
 
@@ -44,7 +44,11 @@ The 95% binomial CI half-width on n=1761 is about 1.9pp, so an epoch-to-epoch QF
 
 This criterion is fixed now; the reproduction's per-epoch 5-seed QFrBLiMP numbers are then applied to it as-is.
 
-## 4. Reconstructing the two untraceable numbers
+## 4. Two aggregator issues flagged to the authors (not fixed here)
+
+Beyond the numbers below, two `aggregate_paper_tables.py` issues are left for the authors to fix and test: (a) the §4.2 BabyLM block (`prose_babylm` reads top-level keys the suite nests under `tasks`, so it comes out empty), and (b) `table2_bli` reports the Random-orthogonal reference row from a single seed (`rows[0]`) although that baseline is seed-dependent (`run_bli_procrustes.py` uses `default_rng(seed+1)`), so it should be a 5-seed mean +/- std like the main rows.
+
+## 5. Reconstructing the two untraceable numbers
 
 Both are in the abstract/conclusion and currently have no provenance outside the .tex.
 
