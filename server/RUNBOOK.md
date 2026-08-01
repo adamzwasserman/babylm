@@ -8,7 +8,7 @@ It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the 
 
 `scripts/run_paper_part1.sh` runs seven phases, each of which skips itself if its output already exists:
 
-1. **Train** five seeded checkpoints, five epochs each (42, 43, 44, 45, 46) -> `models/seed{S}/chck_92M_epoch{1..5}/`. The paper's reported model is the epoch-3 checkpoint; phase 2 picks it automatically and links it as `models/seed{S}/best`. See Running for the required `--epochs 5`.
+1. **Train** five seeded checkpoints, five epochs each (42, 43, 44, 45, 46) -> `models/seed{S}/chck_92M_epoch{1..5}/`. Phase 2 selects the best epoch automatically, by argmax of per-epoch QFrBLiMP, and links it as `models/seed{S}/best` (the paper's peak was epoch 3; under the corrected scorer the pick is resolved dynamically and may differ). See Running for the required `--epochs 5`.
 2. **QFrBLiMP** zero-shot, every epoch -> `eval_results/seed{S}_qfrblimp_epoch{1..5}.json` (Table 1 + the trajectory figure)
 3. **QFrCoLA** fine-tune + MCC -> `eval_results/seed{S}_qfrcola.json`
 4. **BabyLM suite** -> `eval_results/seed{S}_babylm.json`. Zero-shot: BLiMP, BLiMP-Supplement, EWoK, entity-tracking, wug adjective-nominalization, wug past-tense, COMPS, and reading (eye-tracking / self-paced). Fine-tune: (Super)GLUE (BoolQ, RTE, MRPC, WSC, MNLI, MultiRC, QQP). (GlobalPIQA is not part of this suite; it was a separate leaderboard-submission task and is not a paper table.)
@@ -157,6 +157,6 @@ These are follow-ups, not part of this reproduction.
 - **GLUE fine-tuning fails with "tokenizer does not have a padding token".** This is handled automatically: `scripts/eval_babylm_suite.py` idempotently patches the pipeline's `finetune/trainer.py` to set a `pad_token` (eos, then unk) on first run. If you see this, you invoked a pipeline script directly instead of through the wrapper. Run phase 4 via the orchestrator (or `scripts/eval_babylm_suite.py`) so the patch is applied.
 - **`setup.sh` prints WARN on EWoK.** The EWoK subset is gated. Run `huggingface-cli whoami` to confirm you are logged in, and request access to `ewok-core/ewok-core-1.0`. Without it, phase 4 still runs but reports EWoK as unavailable rather than as a null result.
 - **OSF download fails.** `pip install osfclient`, then re-run `server/setup.sh`; it only re-fetches what is missing.
-- **Out-of-memory during training or GLUE.** Lower batch size: `TRAIN_EXTRA="--batch_size 16"` for training; for the GLUE grid, `run_xling_glue.py` accepts `--batch_size 8` (edit is only needed if OOM occurs).
+- **Out-of-memory during training or GLUE.** Lower batch size: `TRAIN_EXTRA="--epochs 5 --batch_size 16"` for training (keep `--epochs 5`, or you silently retrain the wrong one-epoch model); for the GLUE grid, `run_xling_glue.py` accepts `--batch_size 8` (edit is only needed if OOM occurs).
 - **A phase fails partway.** Re-run the same `run_paper_part1.sh` command; completed seeds and cells are skipped, so it resumes. To force a single phase, use `PHASE=N`.
 - **Training seems to re-run seeds you already have.** The skip check looks for `models/seed{S}/chck_*M`. Confirm the checkpoints are under exactly that path; a partial or moved checkpoint directory will trigger a retrain.
