@@ -30,6 +30,7 @@ uv.lock
 # Eval pipeline and baselines (cloned separately)
 eval/evaluation-pipeline*/
 eval/baseline-pretraining/
+eval/babylm-eval/
 
 # Logs
 logs/
