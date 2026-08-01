@@ -6,13 +6,13 @@ These are the additional controls and decisions agreed for the camera-ready revi
 
 **Why.** The CL-GLUE gradient (relational tasks gain, MNLI regresses ~-11pp) is only a *task-type* effect if it is not explained by training-set size. MNLI has ~393k training examples; MRPC ~3.7k, RTE ~2.5k. A frozen-base LoRA can plateau first on the largest task, which would make the MNLI regression a fine-tuning-scale artifact, not a world-knowledge effect.
 
-**What to run.** `run_xling_glue.py` now takes `--max_train N`, which caps and reshuffles the training split (per-seed) and writes to a distinct file (`seed{S}_xglue_{lever}_{task}_max{N}.json`, so it does not overwrite the full cell). Run the MNLI cell at 3000 (matching the small tasks) for `Baseline` and `D+C`, on both the French checkpoint and the English baseline, across the five seeds:
+**What to run.** `run_xling_glue.py` now takes `--max_train N`, which caps and reshuffles the training split (per-seed) and writes to a distinct file (`seed{S}_xglue_{lever}_{task}_max{N}.json`; the `+` in a lever name is stripped, so `D+C` becomes `DC` -> `seed{S}_xglue_DC_{task}_max{N}.json`), so it does not overwrite the full cell. Run the MNLI cell at 3000 (matching the small tasks) for `Baseline` and `D+C`, on both the French checkpoint and the English baseline, across the five seeds. The output filename encodes only seed/lever/task/max, not the model, so the English runs must go to a separate `--output_dir` or they collide with (and are skipped in favour of) the French cells of the same name:
 
 ```bash
 for S in 42 43 44 45 46; do
   for L in Baseline "D+C"; do
     python scripts/run_xling_glue.py <french_ckpt_seed$S>  --lever "$L" --task mnli --seed $S --max_train 3000 --output_dir eval_results
-    python scripts/run_xling_glue.py <english_baseline>    --lever "$L" --task mnli --seed $S --max_train 3000 --output_dir eval_results
+    python scripts/run_xling_glue.py <english_baseline>    --lever "$L" --task mnli --seed $S --max_train 3000 --output_dir eval_results/english_baseline
   done
 done
 ```
@@ -23,11 +23,11 @@ done
 
 **Why.** The French side isolates LoRA rank with lever C (rank 16, English data) vs Baseline (rank 8, English data). The same control must be shown on the English-pretrained model so a rank effect cannot masquerade as the pipeline effect.
 
-**What to run.** The full lever grid on the English baseline gives it directly (Baseline = rank 8, C = rank 16, both English data):
+**What to run.** The full lever grid on the English baseline gives it directly (Baseline = rank 8, C = rank 16, both English data). As in control 1, the English cells share the `seed{S}_xglue_{lever}_{task}.json` naming with the French phase-6 grid (the filename does not encode the model), so send them to a separate `--output_dir` to avoid colliding with the French run:
 
 ```bash
 for S in 42 43 44 45 46; do
-  python scripts/run_xling_glue.py <english_baseline> --all_levers --all_tasks --seed $S --output_dir eval_results
+  python scripts/run_xling_glue.py <english_baseline> --all_levers --all_tasks --seed $S --output_dir eval_results/english_baseline
 done
 ```
 

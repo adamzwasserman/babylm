@@ -81,7 +81,7 @@ fi
 
 echo "==================== summary ===================="
 if [ "$FAIL" = "0" ]; then
-  echo "SETUP OK. Next: bash scripts/run_paper_part1.sh 42 43 44 45 46"
+  echo 'SETUP OK. Next: TRAIN_EXTRA="--epochs 5 --wandb_mode disabled" bash scripts/run_paper_part1.sh 42 43 44 45 46'
   if [ "${EWOK_OK:-0}" = "1" ]; then
     echo "  EWoK: generated."
   else

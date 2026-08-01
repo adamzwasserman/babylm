@@ -2,7 +2,7 @@
 
 This runbook reproduces all of Section 4 of the MÉTRON-FR paper from scratch on a single server: it trains the five seeded French models and runs every evaluation, ending in the paper's Tables 1 to 3 and the leaderboard suite. It is written to be executed end to end by an automated agent with no prior context. Follow it in order. Do not skip the pre-flight.
 
-It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the `main` branch, so every number uses the current, tested evaluation code (including the corrected QFrBLiMP scorer merged in PR #26).
+It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the `david-reproduction` branch (based on `main`, plus the `--max_train` control), so every number uses the current, tested evaluation code (including the corrected QFrBLiMP scorer merged in PR #26).
 
 ## What this produces
 
@@ -51,7 +51,7 @@ bash server/setup.sh                    # corpus + tokenizer + eval-pipeline dat
 
 `server/setup.sh` is idempotent. It downloads the published French corpus to `corpus/final/train_french.txt`, builds the shared 50k tokenizer at `models/tokenizer/`, verifies the GLUE and BLI data that ship in the repo, and clones the BabyLM eval pipeline plus its OSF data for the suite phase. It prints `SETUP OK` when the required inputs (corpus, tokenizer, repo-shipped data, and the eval-pipeline data) are present, and separately reports whether the gated EWoK subset was generated. EWoK is best-effort: if its download fails, setup still reports `SETUP OK` and prints an `EWoK: UNAVAILABLE` line, and the suite runs without EWoK (the §4.2 EWoK number will be missing until you gain `ewok-core/ewok-core-1.0` access and re-run setup). Do not proceed past a non-OK result.
 
-**Environment note (transformers version).** The BabyLM eval pipeline pins `transformers==4.51.3`, `tokenizers==0.21.1`, and `torch==2.7.0` into this same virtual environment, so that is the version you reproduce under. The paper's original runs used a newer transformers via a lock file that is not committed here; the difference that moved the reported QFrBLiMP numbers was the scorer correction in PR #26, not the transformers version, so 4.51.3 is the accepted reproduction environment. Do not upgrade transformers to a 5.x release in this venv; the GPT-2 loader used here can break on it.
+**Environment note (transformers version).** The BabyLM eval pipeline pins `transformers==4.51.3` and `tokenizers==0.21.1` into this same virtual environment, so that is the version you reproduce under. The paper's original runs used a newer transformers via a lock file that is not committed here; the difference that moved the reported QFrBLiMP numbers was the scorer correction in PR #26, not the transformers version, so 4.51.3 is the accepted reproduction environment. Do not upgrade transformers to a 5.x release in this venv; the GPT-2 loader used here can break on it.
 
 ## Pre-flight checklist (run BEFORE the long job; each has bitten runs before)
 
@@ -111,7 +111,7 @@ Useful controls (all optional):
 
 ## Resume and preservation (why interruption is safe)
 
-- **Every phase is idempotent.** Training skips any seed that already has a `models/seed{S}/chck_*M` checkpoint; each eval phase skips any seed whose output JSON already exists; aggregation reads whatever is present. If the process stops for any reason, re-run the exact same command and it continues from the first missing piece. Nothing is recomputed.
+- **Every phase is idempotent.** Training skips any seed that already has a `models/seed{S}/chck_*M` checkpoint; each eval phase skips any seed whose output JSON already exists; aggregation reads whatever is present. If the process stops for any reason, re-run the exact same command and it continues from the first missing piece. Nothing is recomputed. One caution on training specifically: the phase-1 skip keys on any `chck_*M` checkpoint, and word-cadence checkpoints are written during epoch 1, so if a training run is interrupted mid-training, delete that `models/seed{S}/` directory before re-running, or the orchestrator treats the partial model as done and skips retraining.
 - **Results land incrementally.** Per-seed, per-epoch JSONs are written to `eval_results/` as each finishes, and checkpoints to `models/seed{S}/` as each seed trains. There is no single end-of-run step that could lose everything.
 - **Back up as you go.** After each phase, or at the end, copy `eval_results/`, `paper_tables.*`, and the checkpoints somewhere durable (see Returning results). Do not rely on the working directory alone.
 
@@ -120,7 +120,7 @@ Useful controls (all optional):
 After the run, confirm the expected outputs exist:
 
 ```bash
-ls models/seed{42,43,44,45,46}/chck_*M >/dev/null && echo "checkpoints OK"
+ls -d models/seed{42,43,44,45,46}/chck_*_epoch5 >/dev/null && echo "final-epoch checkpoints OK"
 ls eval_results/seed42_qfrblimp_epoch{1,2,3,4,5}.json >/dev/null && echo "QFrBLiMP epochs OK"
 for s in 42 43 44 45 46; do
   echo "seed $s: qfrcola=$(ls eval_results/seed${s}_qfrcola.json 2>/dev/null | wc -l) babylm=$(ls eval_results/seed${s}_babylm.json 2>/dev/null | wc -l) bli=$(ls eval_results/seed${s}_bli_*.json 2>/dev/null | wc -l) xglue=$(ls eval_results/seed${s}_xglue_*.json 2>/dev/null | wc -l)"
@@ -151,7 +151,7 @@ These are follow-ups, not part of this reproduction.
 
 ## Troubleshooting
 
-- **A GPT-2 import or load fails right after install.** `requirements.txt` leaves `transformers` unpinned, so a plain `pip install -r requirements.txt` can pull a much newer major that breaks the GPT-2 loader used here. The BabyLM eval pipeline that `server/setup.sh` installs pins `transformers==4.51.3`, `tokenizers==0.21.1`, `torch==2.7.0` into the same environment, so running `server/setup.sh` before the job usually settles the versions. If a repo script still fails to load the model, pin explicitly: `pip install "transformers==4.51.3" "tokenizers==0.21.1"`.
+- **A GPT-2 import or load fails right after install.** `requirements.txt` leaves `transformers` unpinned, so a plain `pip install -r requirements.txt` can pull a much newer major that breaks the GPT-2 loader used here. The BabyLM eval pipeline that `server/setup.sh` installs pins `transformers==4.51.3` and `tokenizers==0.21.1` into the same environment, so running `server/setup.sh` before the job usually settles the versions. If a repo script still fails to load the model, pin explicitly: `pip install "transformers==4.51.3" "tokenizers==0.21.1"`.
 - **Training dies before the first step with a compiler or Triton error.** `scripts/train.py` calls `torch.compile` on CUDA and needs a working C compiler to build Triton kernels. Install one (`apt-get install -y build-essential`) and re-run. The pre-flight training smoke exercises `torch.compile`, so it catches this before the full run.
 - **Phase 4 crashes at import with `torchvision::nms does not exist`.** This is a torch/torchvision version mismatch dragged in alongside the eval-pipeline install; the text eval never uses vision. Remove it and re-run the phase: `pip uninstall -y torchvision`.
 - **GLUE fine-tuning fails with "tokenizer does not have a padding token".** This is handled automatically: `scripts/eval_babylm_suite.py` idempotently patches the pipeline's `finetune/trainer.py` to set a `pad_token` (eos, then unk) on first run. If you see this, you invoked a pipeline script directly instead of through the wrapper. Run phase 4 via the orchestrator (or `scripts/eval_babylm_suite.py`) so the patch is applied.
