@@ -20,12 +20,13 @@ It runs the repository's own orchestrator, `scripts/run_paper_part1.sh`, on the 
 
 - One or more CUDA GPUs. Training and the GLUE grid parallelise across all visible GPUs in waves; more GPUs is faster, one GPU works. The model is 125M parameters, so a 16 to 24 GB card is enough.
 - Wall-clock is dominated by training (five models, five epochs each on ~92M words) and by the GLUE grid (125 small fine-tunes). Budget several hours to a day depending on GPU count. The run is fully resumable, so it does not need to finish in one sitting.
+- Disk: training keeps every checkpoint it writes. Per seed that is 19 word-cadence checkpoints (1M to 100M words) plus 5 per-epoch checkpoints, each a full ~0.5 GB 125M-parameter model directory, so roughly 12 GB per seed and about 60 GB across the five seeds, before the ~2 GB eval pipeline and its data. Provision at least ~80 GB of free space for `models/` and `eval/`, or the run will die partway through training with no warning.
 
 ## Prerequisites
 
 - Python 3.11 or newer, in a fresh virtual environment. The repo's `pyproject.toml` declares `requires-python >=3.13`; match 3.13 to the authors' environment if you can.
 - A working C compiler (`build-essential` on Debian/Ubuntu). `scripts/train.py` calls `torch.compile` on CUDA, which builds Triton kernels and fails without one. A normal GPU dev box has this; a minimal container may not.
-- A Hugging Face account with `huggingface-cli login` completed. Needed because the EWoK evaluation subset is gated (request access to `ewok-core/ewok-core-1.0` if you have not before) and, if you choose to upload results, for write access.
+- A Hugging Face access token (read scope) in the `HF_TOKEN` environment variable. An autonomous agent must authenticate non-interactively: `huggingface-cli login` on its own blocks on stdin waiting for a pasted token and will hang the run. Exporting `HF_TOKEN` is enough on its own (the `huggingface_hub` client and the setup script both read it), and the setup step below also runs a non-interactive `huggingface-cli login --token` to persist it. Auth is needed because the EWoK evaluation subset is gated (request access to `ewok-core/ewok-core-1.0` first if you have not before) and, if the published corpus dataset is private, to download it.
 - Outbound access to huggingface.co, github.com, osf.io, and raw.githubusercontent.com.
 - Optional: a Weights & Biases account. If you do not want it, training runs with `--wandb_mode disabled` (see Running).
 
@@ -42,7 +43,8 @@ pip install -r requirements.txt         # authoritative dependency list (torch, 
                                         # datasets, peft, scikit-learn, accelerate, spacy, etc.)
 pip install osfclient nltk              # needed by the eval-pipeline setup; not in requirements.txt
 
-huggingface-cli login                   # paste a token; needed for gated EWoK
+export HF_TOKEN=hf_xxxxxxxxxxxxxxxx      # your HF access token (read scope), NOT an interactive prompt
+huggingface-cli login --token "$HF_TOKEN"   # non-interactive; persists the token, needed for gated EWoK + corpus
 
 bash server/setup.sh                    # corpus + tokenizer + eval-pipeline data
 ```
@@ -90,14 +92,16 @@ Only after all five pass, launch the full run.
 
 The paper trains each seed for five epochs and reports the epoch-3 checkpoint (`chck_92M_epoch3`) as the grammatical-competence peak. `scripts/train.py` defaults to a single epoch and the orchestrator does not override it, so you MUST pass `--epochs 5` through `TRAIN_EXTRA`. This is not optional: without it phase 1 trains one epoch, phase 2 produces only an `epoch1` file per seed, the best-epoch pick collapses to epoch 1, and the epoch-3 headline plus the five-epoch QFrBLiMP trajectory can never be built. The run would appear to succeed while reproducing the wrong model.
 
-```bash
-TRAIN_EXTRA="--epochs 5" bash scripts/run_paper_part1.sh 42 43 44 45 46
-```
-
-To also run without Weights & Biases:
+For an autonomous run, use the Weights & Biases-disabled command below. `scripts/train.py` defaults to `--wandb_mode online`; with no W&B credentials on the host that call fails at `wandb.init()` in phase 1 (the orchestrator only WARNs about missing credentials, it does not switch to offline for you). Disabling W&B is the safe non-interactive default:
 
 ```bash
 TRAIN_EXTRA="--epochs 5 --wandb_mode disabled" bash scripts/run_paper_part1.sh 42 43 44 45 46
+```
+
+Only if you have a W&B account and have set it up non-interactively (`export WANDB_API_KEY=...`, or `wandb login` beforehand) run the online variant instead:
+
+```bash
+TRAIN_EXTRA="--epochs 5" bash scripts/run_paper_part1.sh 42 43 44 45 46
 ```
 
 Useful controls (all optional):
