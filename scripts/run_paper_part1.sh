@@ -24,6 +24,7 @@
 # Environment knobs:
 #   N_GPUS         override GPU count for parallel trainings (default: nvidia-smi -L)
 #   TRAIN_EXTRA    extra flags forwarded to train.py (e.g. --wandb_mode disabled)
+#   XGLUE_EXTRA    extra flags forwarded to run_xling_glue.py in phase 6 (e.g. --batch_size 8)
 #   CKPT_NAME      checkpoint name to evaluate (default: chck_92M)
 #   FORCE          re-run a phase even if the expected output exists
 #   PHASE          run only one phase number; otherwise run all
@@ -326,7 +327,7 @@ if ! skip_phase 6; then
             ckpt=$(CKPT_PATH "$s")
             echo "  [phase 6 wave $wave_num] seed=$s on GPU $gpu -> $log"
             CUDA_VISIBLE_DEVICES=$gpu python scripts/run_xling_glue.py \
-                "$ckpt" --seed "$s" --all_levers --all_tasks \
+                "$ckpt" --seed "$s" --all_levers --all_tasks ${XGLUE_EXTRA:-} \
                 > "$log" 2>&1 &
             wave_pids+=("$!")
             wave_seeds+=("$s")
